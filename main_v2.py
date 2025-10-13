@@ -85,6 +85,8 @@ try:
         # Inicializa variáveis
         motivo_encontrado = False
         registros = []
+        data_atual = None
+        re_atual = None
 
         while not motivo_encontrado:
             if interrompido:
@@ -102,10 +104,6 @@ try:
                 except Exception:
                     continue
 
-            data_atual = None
-            re_atual = None
-            lembrar_data = None
-
             for i, elem in enumerate(todos):
                 texto = elem["texto"]
 
@@ -114,17 +112,12 @@ try:
                     if texto != data_atual:
                         data_atual = texto
                         re_atual = todos[i - 1]["texto"] if i > 0 else ""
-                        if lembrar_data:
-                            data_atual = lembrar_data
-                            lembrar_data = None
                     
-
                  # 🔵 captura pares de valores dentro da mesma data
                 if texto == "Val.antigo:" and i + 1 < len(todos):
                     val_antigo = todos[i + 1]["texto"]
                     if val_antigo == "Val.novo:":
                         val_antigo = ""
-                        
 
                     # busca o próximo "Val.novo:" dentro da mesma data
                     val_novo = ""
@@ -134,10 +127,8 @@ try:
                         j = i + 2
                     while j < len(todos):
                         prox_texto = todos[j]["texto"]
-
                         # se achou nova data, interrompe — o próximo par pertence à próxima data
                         if is_data(prox_texto):
-                            lembrar_data = prox_texto
                             break
                         if prox_texto == "Val.novo:" and j + 1 < len(todos):
                             if todos[j + 1]["texto"] != "5":
@@ -146,12 +137,12 @@ try:
                                     motivo_encontrado = True
                             break
                         j += 1
-                    
+
                     linha_nova = {
                         "Instalacao": instalacao,
                         "Contrato": contrato,
-                        "RE": re_atual or "",
-                        "Data": data_atual or "",
+                        "RE": re_atual,
+                        "Data": data_atual,
                         "VAL.ANTIGO:": val_antigo or "",
                         "VAL.NOVO:": val_novo or "",
                     }

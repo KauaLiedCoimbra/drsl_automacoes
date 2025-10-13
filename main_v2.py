@@ -107,13 +107,13 @@ try:
             for i, elem in enumerate(todos):
                 texto = elem["texto"]
 
-                # 🟢 Quando encontrar uma nova data, atualiza o RE e a data em uso
+                # Quando encontrar uma nova data, atualiza o RE e a data em uso
                 if is_data(texto) and not (i > 0 and todos[i - 1]["texto"] in ["Val.antigo:", "Val.novo:"]):
                     if texto != data_atual:
                         data_atual = texto
                         re_atual = todos[i - 1]["texto"] if i > 0 else ""
                     
-                 # 🔵 captura pares de valores dentro da mesma data
+                 # captura pares de valores dentro da mesma data
                 if texto == "Val.antigo:" and i + 1 < len(todos):
                     val_antigo = todos[i + 1]["texto"]
                     if val_antigo == "Val.novo:":

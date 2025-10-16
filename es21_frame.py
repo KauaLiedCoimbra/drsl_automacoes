@@ -43,12 +43,12 @@ def criar_frame_es21(parent, btn_voltar=None):
             logs_widget.config(state="normal")
             logs_widget.insert("end", f"📄 Arquivo selecionado: {caminho}\n")
             logs_widget.config(state="disabled")
-            logs_widget.see("end")
+        #    logs_widget.see("end")
         else:
             logs_widget.config(state="normal")
             logs_widget.insert("end", "⚠ Nenhum arquivo selecionado\n")
             logs_widget.config(state="disabled")
-            logs_widget.see("end")
+        #    logs_widget.see("end")
 
     def executar_es21_thread():
         nonlocal caminho_planilha

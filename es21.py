@@ -28,16 +28,31 @@ def executar_es21(caminho_planilha, print_log):
     # Lê planilhas
     try:
         df = pd.read_excel(caminho_planilha)
+
     except Exception as e:
         print_log(f"❌ Erro ao abrir a planilha {caminho_planilha}: {e}")
         return
     
+    df = u.normalizar_colunas(df)
+    grupos = {
+        "INSTALACAO": ["INSTALACAO", "INSTALACOES"], 
+        "CONTRATOS": ["CONTRATOS", "CONTRATO"], 
+        "MOTIVO": ["MOTIVO", "MOTIVOS", "ERRO", "LOG", "ERROS", "LOGS"], 
+    }
+    novas_colunas = []
+    
+    for col in df.columns:
+        novo_nome = next((nome_padrao for nome_padrao, variantes in grupos.items() if col in variantes), col)
+        novas_colunas.append(novo_nome)
+    df.columns = novas_colunas
+
     try:
         df_colheita = pd.read_excel("dados_coletados.xlsx")
     except FileNotFoundError:
         df_colheita = pd.DataFrame(columns=['Instalacao','Contrato','RE','Data','VAL.ANTIGO:','VAL.NOVO:'])
 
     # Corrige colunas
+
     for col in ['INSTALACAO','CONTRATOS', 'MOTIVO']:
         if col in df.columns:
             df[col] = df[col].apply(lambda x: str(int(x)) if isinstance(x, float) else str(x)).str.strip()

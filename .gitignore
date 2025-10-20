@@ -1,5 +1,6 @@
 # Ignorar arquivos Excel
 *.xlsx
+*.xlsm
 
 # Ignorar cache do Python
 __pycache__/

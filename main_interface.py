@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from es21_frame import criar_frame_es21
+import style
+import ctypes
 
 # ---------------------------
 # Dados iniciais
@@ -22,13 +24,11 @@ frames_criados = {}
 # ---------------------------
 root = tk.Tk()
 root.title("Automações do Kauã")
-root.geometry("700x500")
+root.geometry("1100x800+200+50")
 root.resizable(False, False)
+ctypes.windll.shcore.SetProcessDpiAwareness(1)
+root.tk.call('tk', 'scaling', 2)
 
-# Dicionário com conteúdos específicos de sistemas
-sistemas_frames = {
-    "Logs de bloqueio - ES21": criar_frame_es21,
-}
 # ---------------------------
 # Frames
 # ---------------------------
@@ -62,7 +62,7 @@ def abrir_sistemas(nucleo):
     sistemas = nucleos[nucleo]
     if sistemas:
         # Canvas rolável apenas se houver sistemas
-        canvas = tk.Canvas(systems_container, height=200, highlightthickness=0)
+        canvas = tk.Canvas(systems_container, height=200, bg=style.DRACULA_BG, highlightthickness=0)
         scrollbar = ttk.Scrollbar(systems_container, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
 
@@ -93,7 +93,8 @@ def abrir_frame_sistema(sistema):
     for widget in system_frame.winfo_children():
         widget.destroy()
 
-    ttk.Label(system_frame, text=f"Sistema: {sistema}", font=("Arial", 16, "bold")).pack(pady=20)
+    ttk.Label(system_frame, text=f"Sistema: {sistema}", font=("Consolas", 22, "bold"),
+              foreground=style.DRACULA_TITLE, background=style.DRACULA_BG).pack(pady=30)
 
     if sistema in sistemas_frames:
         frame, logs_widget, interromper = sistemas_frames[sistema](system_frame, btn_voltar=btn_voltar)
@@ -101,7 +102,8 @@ def abrir_frame_sistema(sistema):
         btn_voltar.place(x=10, y=10)
         frame.pack(fill="both", expand=True)
     else:
-        ttk.Label(system_frame, text="Conteúdo do sistema aqui (vazio por enquanto)").pack(pady=10)
+        ttk.Label(system_frame, text="Conteúdo do sistema aqui (vazio por enquanto)",
+                  font=("Consolas", 16), foreground=style.DRACULA_FG, background=style.DRACULA_BG).pack(pady=20)
 
     system_frame.pack(fill="both", expand=True)
 
@@ -114,15 +116,17 @@ def voltar_para_nucleos():
 # ---------------------------
 # Botão Voltar fixo (persistente)
 # ---------------------------
-btn_voltar = ttk.Button(root, text="🔙 Voltar", command=lambda: voltar_para_nucleos())
+btn_voltar = ttk.Button(root, text="🔙 Voltar", command=lambda: voltar_para_nucleos(), width=12)
 btn_voltar.place(x=10, y=10)   # posição fixa no canto superior esquerdo
 btn_voltar.place_forget()      # começa escondido
 
 # ---------------------------
 # Títulos e botões dos núcleos
 # ---------------------------
-ttk.Label(frame_nucleos, text="Automações do Kauã", font=("Arial", 18, "bold")).grid(row=0, column=0, columnspan=3, pady=(0,10))
-ttk.Label(frame_nucleos, text="Escolha o núcleo:", font=("Arial", 14, "bold")).grid(row=1, column=0, columnspan=3, pady=(0,10))
+ttk.Label(frame_nucleos, text="Automações do Kauã",
+          font=("Consolas", 26, "bold"), foreground="#ff79c6", background=style.DRACULA_BG).grid(row=0, column=0, columnspan=3, pady=(10))
+ttk.Label(frame_nucleos, text="Escolha o núcleo:",
+          font=("Consolas", 20), foreground=style.DRACULA_FG, background=style.DRACULA_BG).grid(row=1, column=0, columnspan=3, pady=(10))
 
 for i, nucleo in enumerate(nucleos.keys()):
     row = 2 + i // 3
@@ -136,4 +140,5 @@ for col in range(3):
 # ---------------------------
 # Inicializa interface
 # ---------------------------
+style.aplicar_estilo(root)
 root.mainloop()

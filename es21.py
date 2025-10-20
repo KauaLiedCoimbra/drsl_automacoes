@@ -13,16 +13,16 @@ def executar_es21(caminho_planilha, print_log):
     global interrompido
     todos_registros = []
 
-    def salvar_colheita(df_colheita, todos_registros, print_log):
+    def salvar_colheita(df_dados_coletados, todos_registros, print_log):
         if not todos_registros:
             return
-        df_colheita_save = pd.concat([df_colheita, pd.DataFrame(todos_registros)], ignore_index=True)
+        df_dados_coletados_save = pd.concat([df_dados_coletados, pd.DataFrame(todos_registros)], ignore_index=True)
         try:
             with pd.ExcelWriter(f"dados_coletados.xlsx", engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-                df_colheita_save.to_excel(writer, sheet_name="Coleta", index=False)
+                df_dados_coletados_save.to_excel(writer, sheet_name="Coleta", index=False)
             print_log("✅ Dados salvos em 'dados_coletados.xlsx'")
         except FileNotFoundError:
-            df_colheita_save.to_excel("dados_coletados.xlsx", index=False)
+            df_dados_coletados_save.to_excel("dados_coletados.xlsx", index=False)
             print_log("✅ Arquivo 'dados_coletados.xlsx' criado do zero.")
 
     # Lê planilhas
@@ -47,9 +47,9 @@ def executar_es21(caminho_planilha, print_log):
     df.columns = novas_colunas
 
     try:
-        df_colheita = pd.read_excel("dados_coletados.xlsx")
+        df_dados_coletados = pd.read_excel("dados_coletados.xlsx")
     except FileNotFoundError:
-        df_colheita = pd.DataFrame(columns=['Instalacao','Contrato','RE','Data','VAL.ANTIGO:','VAL.NOVO:'])
+        df_dados_coletados = pd.DataFrame(columns=['Instalacao','Contrato','RE','Data','VAL.ANTIGO:','VAL.NOVO:'])
 
     # Corrige colunas
 
@@ -63,9 +63,7 @@ def executar_es21(caminho_planilha, print_log):
     # Conexão SAP
     try:
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
-        application = SapGuiAuto.GetScriptingEngine
-        connection = application.Children(0)
-        session = connection.Children(0)
+        session = SapGuiAuto.GetScriptingEngine.Children(0).Children(0)
     except Exception as e:
         print_log(f"❌ Erro ao conectar ao SAP: {e}")
         return
@@ -76,7 +74,8 @@ def executar_es21(caminho_planilha, print_log):
     session.findById("wnd[0]").sendVKey(0)
     
     total_contratos = len(df)
-
+    scroll = session.findById("wnd[0]/usr").verticalScrollbar
+    
     try:
         for index, row in df.iterrows():
             instalacao = row['INSTALACAO']
@@ -85,7 +84,6 @@ def executar_es21(caminho_planilha, print_log):
             contratos_restantes = total_contratos - (index + 1)
             print_log(f'🔍 Processando contrato {contrato}... Motivo: {motivo}')
 
-            print(interrompido)
             if interrompido:
                 print_log(f"⚠ Execução interrompida pelo usuário. Salvando dados coletados até agora...")
                 break
@@ -172,7 +170,6 @@ def executar_es21(caminho_planilha, print_log):
 
                 # Se não encontrou o motivo, faz o scroll e continua lendo
                 if not motivo_encontrado:
-                    scroll = session.findById("wnd[0]/usr").verticalScrollbar
                     if scroll.position >= scroll.maximum:
                         print_log(f"⚠️ Contrato {contrato}: final da tela atingido. Motivo não encontrado.")
                         registros = registros[-10:]
@@ -190,11 +187,11 @@ def executar_es21(caminho_planilha, print_log):
 
     except Exception as e:
         print_log(f"❌ Ocorreu um erro: {e}")
-        salvar_colheita(df_colheita, todos_registros, print_log)
+        salvar_colheita(df_dados_coletados, todos_registros, print_log)
 
     # Salva no final
     if todos_registros:
-        salvar_colheita(df_colheita, todos_registros, print_log)
+        salvar_colheita(df_dados_coletados, todos_registros, print_log)
         print_log('🏁 Processamento finalizado. Resultados em "dados_coletados.xlsx".')
 
     try:

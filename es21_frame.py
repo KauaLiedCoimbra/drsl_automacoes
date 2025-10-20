@@ -2,6 +2,7 @@ from tkinter import ttk, scrolledtext, filedialog
 import threading
 import es21
 import utils as u
+import style
 
 def criar_frame_es21(parent, btn_voltar=None):
     """Cria o frame completo do ES21 com logs e botões"""
@@ -16,8 +17,9 @@ def criar_frame_es21(parent, btn_voltar=None):
     frame,
     width=90,
     height=15,
-    font=("Consolas", 10),
-    insertbackground="white",  # cor do cursor (mesmo que não apareça)
+    font=("Consolas", 10),  # fundo do Dracula
+    fg=style.DRACULA_FG,
+    bg=style.DRACULA_BG,  # cor do cursor (mesmo que não apareça)
     relief="flat",             # sem bordas 3D
     borderwidth=5,
     padx=5,
@@ -74,5 +76,7 @@ def criar_frame_es21(parent, btn_voltar=None):
     ttk.Button(btn_frame, text="📎 Anexar planilha", command=anexar_planilha).pack(side="left", padx=5, ipady=5)
     ttk.Button(btn_frame, text="▶ Executar ES21", command=executar_es21_thread).pack(side="left", padx=5, ipady=5)
     ttk.Button(btn_frame, text="⏹ interromper", command=interromper).pack(side="left", padx=5, ipady=5)
+
+    style.aplicar_estilo(frame)
 
     return frame, logs_widget, interromper

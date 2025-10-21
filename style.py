@@ -3,6 +3,7 @@ from tkinter import ttk
 # Cores Dracula
 DRACULA_BG = "#282A36"
 DRACULA_WIDGET_BG = "#44475a"
+DRACULA_LOGS_WIDGET = "#1e1f29"
 DRACULA_FG = "#F8F8F2"
 DRACULA_TITLE = "#ff79c6"
 DRACULA_BUTTON_BG = "#6272a4"

@@ -19,7 +19,7 @@ def criar_frame_es21(parent, btn_voltar=None):
     height=15,
     font=("Consolas", 10),  # fundo do Dracula
     fg=style.DRACULA_FG,
-    bg=style.DRACULA_BG,  # cor do cursor (mesmo que não apareça)
+    bg=style.DRACULA_LOGS_WIDGET,  # cor do cursor (mesmo que não apareça)
     relief="flat",             # sem bordas 3D
     borderwidth=5,
     padx=5,
@@ -42,15 +42,9 @@ def criar_frame_es21(parent, btn_voltar=None):
         )
         if caminho:
             caminho_planilha = caminho
-            logs_widget.config(state="normal")
-            logs_widget.insert("end", f"📄 Arquivo selecionado: {caminho}\n")
-            logs_widget.config(state="disabled")
-        #    logs_widget.see("end")
+            u.print_log(logs_widget, f"📄 Arquivo selecionado: {caminho}")
         else:
-            logs_widget.config(state="normal")
-            logs_widget.insert("end", "⚠ Nenhum arquivo selecionado\n")
-            logs_widget.config(state="disabled")
-        #    logs_widget.see("end")
+            u.print_log(logs_widget, "⚠ Nenhum arquivo selecionado")
 
     def executar_es21_thread():
         nonlocal caminho_planilha

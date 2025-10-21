@@ -9,11 +9,21 @@ def is_data(data):
         return False
     
 def print_log(widget, msg):
-    """Insere mensagem no ScrolledText e mantém scroll no final."""
-    widget.config(state="normal")   # habilita escrita temporariamente
-    widget.insert("end", msg + "\n")
-    #widget.see("end")               # scroll automático para o final
-    widget.config(state="disabled")
+    if not widget:
+        return
+
+    def _update():
+        widget.config(state="normal")
+        _, bottom = widget.yview()
+        no_final = bottom >= 0.9  # perto do final
+
+        widget.insert("end", msg + "\n")
+        if no_final:
+            widget.see("end")
+
+        widget.config(state="disabled")
+
+    widget.after(0, _update)  # garante execução na thread principal
 
 def normalizar_colunas(planilha):
     novas_colunas = []

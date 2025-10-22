@@ -1,5 +1,4 @@
 import re
-import time
 
 def is_data(data):
     padrao_data = re.compile(r"^\d{2}\.\d{2}\.\d{4}$")

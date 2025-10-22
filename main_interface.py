@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from es21_frame import criar_frame_es21
+from mapear_sap_frame import criar_frame_sap_map
 import style
 import ctypes
 
@@ -9,7 +10,7 @@ import ctypes
 # ---------------------------
 nucleos = {
     "Administrativo": [],
-    "Qualidade": [],
+    "Qualidade": ["Mapeamento SAP"],
     "Pré-Faturamento": [],
     "Pós-Faturamento": ["Logs de bloqueio - ES21"],  # Botão adaptável
     "Reclamação": [],
@@ -17,6 +18,7 @@ nucleos = {
 }
 sistemas_frames = {
     "Logs de bloqueio - ES21": criar_frame_es21,
+    "Mapeamento SAP": criar_frame_sap_map,
 }
 frames_criados = {}
 # ---------------------------
@@ -28,7 +30,6 @@ root.geometry("1100x800+200+50")
 root.resizable(False, False)
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
 root.tk.call('tk', 'scaling', 2)
-
 # ---------------------------
 # Frames
 # ---------------------------

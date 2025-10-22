@@ -32,7 +32,7 @@ def criar_frame_sap_map(parent, btn_voltar=None):
     def executar_mapeamento_thread():
         def target():
             try:
-                mapear_sap.executar_mapeamento(lambda msg: u.print_log(logs_widget, msg))
+                mapear_sap.transcrever_sap_linear(lambda msg: u.print_log(logs_widget, msg))
             except Exception as e:
                 u.print_log(logs_widget, f"❌ Erro durante execução: {e}")
 

@@ -11,10 +11,9 @@ def criar_frame_cata_erro(parent, btn_voltar=None):
     if btn_voltar:
         btn_voltar.place(x=10, y=10) 
 
-    # Frame para logs
-    logs_frame = ttk.Frame(frame)
-    logs_frame.pack(fill="both", expand=True)
-
+    # ---------------------------
+    # Widget de logs
+    # ---------------------------
     logs_widget = scrolledtext.ScrolledText(
         frame,
         width=90,
@@ -30,12 +29,17 @@ def criar_frame_cata_erro(parent, btn_voltar=None):
     logs_widget.pack(fill="both", expand=True)
     logs_widget.config(state="disabled")
 
+    # ---------------------------
     # Frame para botões
+    # ---------------------------
     btn_frame = ttk.Frame(frame)
     btn_frame.pack(fill="x", pady=(10,0))
 
-    caminho_planilha = None
+    caminho_planilha = None  # Variável para armazenar o arquivo selecionado
 
+    # ---------------------------
+    # Função para anexar planilha
+    # ---------------------------
     def anexar_planilha():
         nonlocal caminho_planilha
         caminho = filedialog.askopenfilename(
@@ -48,7 +52,10 @@ def criar_frame_cata_erro(parent, btn_voltar=None):
         else:
             u.print_log(logs_widget, "⚠ Nenhum arquivo selecionado")
 
-    def executar_cata_erro_thread():
+    # ---------------------------
+    # Função para processar Cata-Erro
+    # ---------------------------
+    def executar_cata_erro():
         nonlocal caminho_planilha
         if not caminho_planilha:
             u.print_log(logs_widget, "❌ Nenhum arquivo Excel selecionado.")
@@ -56,10 +63,7 @@ def criar_frame_cata_erro(parent, btn_voltar=None):
 
         def target():
             try:
-                # Processamento do Cata-Erro
-                df = pd.read_excel(caminho_planilha)
-                coluna = df.columns[0].strip()
-
+                # Linhas de ruído a ignorar
                 trechos_para_remover = [
                     "OBS", "Início Criar conta", "Informação adicional", "Docs.que",
                     "Empr.:", "Operação (Empresa", "Energia Compensada Positiva",
@@ -69,11 +73,17 @@ def criar_frame_cata_erro(parent, btn_voltar=None):
                     "No total", "Fim    Criar conta:"
                 ]
 
+                # Carrega o Excel
+                df = pd.read_excel(caminho_planilha)
+                coluna = df.columns[0].strip()
+
+                # Regex para contas
                 regex_conta = re.compile(r'\(conta:\s*(\d{12})\)')
 
                 resultados = []
                 conta_atual = None
 
+                # Processa linhas de baixo para cima
                 for linha in reversed(df[coluna].tolist()):
                     linha_str = str(linha)
                     if any(t.lower() in linha_str.lower() for t in trechos_para_remover):
@@ -88,7 +98,8 @@ def criar_frame_cata_erro(parent, btn_voltar=None):
                 resultados.reverse()
                 df_final = pd.DataFrame(resultados)
 
-                caminho_saida = caminho_planilha.replace(".xlsx", "_separados.xlsx")
+                # Salva arquivo final
+                caminho_saida = caminho_planilha.replace(".xlsx", "_processado.xlsx")
                 df_final.to_excel(caminho_saida, index=False)
 
                 u.print_log(logs_widget, f"✅ Arquivo '{caminho_saida}' criado com {len(df_final)} linhas!")
@@ -96,12 +107,18 @@ def criar_frame_cata_erro(parent, btn_voltar=None):
             except Exception as e:
                 u.print_log(logs_widget, f"❌ Erro durante execução: {e}")
 
+        # Thread para não travar a interface
         threading.Thread(target=target, daemon=True).start()
 
+    # ---------------------------
     # Botões
-    ttk.Button(btn_frame, text="📎 Anexar planilha", command=anexar_planilha).pack(side="left", padx=5, ipady=5)
-    ttk.Button(btn_frame, text="▶ Executar Cata-Erro", command=executar_cata_erro_thread).pack(side="left", padx=5, ipady=5)
+    # ---------------------------
+    ttk.Button(btn_frame, text="📎 Anexar planilha", command=anexar_planilha)\
+        .pack(side="left", padx=5, ipady=5)
+    ttk.Button(btn_frame, text="▶ Executar Cata-Erro", command=executar_cata_erro)\
+        .pack(side="left", padx=5, ipady=5)
 
+    # Aplica estilo
     style.aplicar_estilo(frame)
 
     return frame, logs_widget, None

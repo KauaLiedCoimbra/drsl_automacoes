@@ -1,6 +1,6 @@
 from tkinter import ttk, scrolledtext
 import threading
-import mapear_sap  # módulo que você deve ter para executar a lógica
+import mapear_sap.mapear_sap as mapear_sap  # módulo que você deve ter para executar a lógica
 import utils as u
 import style
 

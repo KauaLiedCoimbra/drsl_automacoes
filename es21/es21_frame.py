@@ -1,6 +1,6 @@
 from tkinter import ttk, scrolledtext, filedialog
 import threading
-import es21
+from es21 import es21
 import utils as u
 import style
 

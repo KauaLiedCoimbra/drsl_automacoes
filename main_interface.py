@@ -1,8 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
-from es21_frame import criar_frame_es21
-from mapear_sap_frame import criar_frame_sap_map
-from ea10_frame import criar_frame_ea10
+from es21.es21_frame import criar_frame_es21
+from mapear_sap.mapear_sap_frame import criar_frame_sap_map
+from cata_erro.cata_erro_frame import criar_frame_cata_erro
+import utils as u
 import style
 import ctypes
 
@@ -13,14 +14,14 @@ nucleos = {
     "Administrativo": [],
     "Qualidade": ["Mapeamento SAP"],
     "Pré-Faturamento": [],
-    "Pós-Faturamento": ["Logs de bloqueio - ES21", "Cata-erro - EA10"],  # Botão adaptável
+    "Pós-Faturamento": ["Logs de bloqueio", "Cata-erro"],  # Botão adaptável
     "Reclamação": [],
     "Jurídico": []
 }
 sistemas_frames = {
-    "Logs de bloqueio - ES21": criar_frame_es21,
+    "Logs de bloqueio": criar_frame_es21,
     "Mapeamento SAP": criar_frame_sap_map,
-    "Cata-erro - EA10": criar_frame_ea10,
+    "Cata-erro": criar_frame_cata_erro
 }
 frames_criados = {}
 # ---------------------------

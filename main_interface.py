@@ -3,7 +3,6 @@ from tkinter import ttk
 from es21.es21_frame import criar_frame_es21
 from mapear_sap.mapear_sap_frame import criar_frame_sap_map
 from cata_erro.cata_erro_frame import criar_frame_cata_erro
-import utils as u
 import style
 import ctypes
 

@@ -1,30 +1,32 @@
 from tkinter import ttk, scrolledtext, filedialog
 import threading
-import es21
+import pandas as pd
+import re
 import utils as u
 import style
 
-def criar_frame_es21(parent, btn_voltar=None):
-    """Cria o frame completo do ES21 com logs e botões"""
+def criar_frame_cata_erro(parent, btn_voltar=None):
+    """Cria o frame do Cata-Erro com logs e botões"""
     frame = ttk.Frame(parent, padding=10)
-    btn_voltar.place(x=10, y=10) 
+    if btn_voltar:
+        btn_voltar.place(x=10, y=10) 
 
+    # Frame para logs
     logs_frame = ttk.Frame(frame)
     logs_frame.pack(fill="both", expand=True)
 
-    # ScrolledText para logs
     logs_widget = scrolledtext.ScrolledText(
-    frame,
-    width=90,
-    height=15,
-    font=("Consolas", 10),  # fundo do Dracula
-    fg=style.DRACULA_FG,
-    bg=style.DRACULA_LOGS_WIDGET,  # cor do cursor (mesmo que não apareça)
-    relief="flat",             # sem bordas 3D
-    borderwidth=5,
-    padx=5,
-    pady=5,
-)
+        frame,
+        width=90,
+        height=15,
+        font=("Consolas", 10),
+        fg=style.DRACULA_FG,
+        bg=style.DRACULA_LOGS_WIDGET,
+        relief="flat",
+        borderwidth=5,
+        padx=5,
+        pady=5
+    )
     logs_widget.pack(fill="both", expand=True)
     logs_widget.config(state="disabled")
 
@@ -46,31 +48,60 @@ def criar_frame_es21(parent, btn_voltar=None):
         else:
             u.print_log(logs_widget, "⚠ Nenhum arquivo selecionado")
 
-    def executar_es21_thread():
+    def executar_cata_erro_thread():
         nonlocal caminho_planilha
         if not caminho_planilha:
             u.print_log(logs_widget, "❌ Nenhum arquivo Excel selecionado.")
             return
-        
+
         def target():
             try:
-                es21.executar_es21(caminho_planilha, lambda msg: u.print_log(logs_widget, msg))
+                # Processamento do Cata-Erro
+                df = pd.read_excel(caminho_planilha)
+                coluna = df.columns[0].strip()
+
+                trechos_para_remover = [
+                    "OBS", "Início Criar conta", "Informação adicional", "Docs.que",
+                    "Empr.:", "Operação (Empresa", "Energia Compensada Positiva",
+                    "_________________________________________________________________________",
+                    "Faturamento residencial", "Instalação(ões)",
+                    "Erro interno:", "Erro durante leitura na tabela",
+                    "No total", "Fim    Criar conta:"
+                ]
+
+                regex_conta = re.compile(r'\(conta:\s*(\d{12})\)')
+
+                resultados = []
+                conta_atual = None
+
+                for linha in reversed(df[coluna].tolist()):
+                    linha_str = str(linha)
+                    if any(t.lower() in linha_str.lower() for t in trechos_para_remover):
+                        continue
+                    match_conta = regex_conta.search(linha_str)
+                    if match_conta:
+                        conta_atual = match_conta.group(1)
+                        continue
+                    if conta_atual:
+                        resultados.append({'CC': conta_atual, 'ERRO': linha_str})
+
+                resultados.reverse()
+                df_final = pd.DataFrame(resultados)
+
+                caminho_saida = caminho_planilha.replace(".xlsx", "_separados.xlsx")
+                df_final.to_excel(caminho_saida, index=False)
+
+                u.print_log(logs_widget, f"✅ Arquivo '{caminho_saida}' criado com {len(df_final)} linhas!")
+
             except Exception as e:
                 u.print_log(logs_widget, f"❌ Erro durante execução: {e}")
-            finally:
-                es21.interrompido = False  # reset após execução
 
         threading.Thread(target=target, daemon=True).start()
 
-    def interromper():
-        es21.interrompido = True
-        u.print_log(logs_widget, "⚠ Interrupção solicitada pelo usuário")
-
     # Botões
     ttk.Button(btn_frame, text="📎 Anexar planilha", command=anexar_planilha).pack(side="left", padx=5, ipady=5)
-    ttk.Button(btn_frame, text="▶ Executar ES21", command=executar_es21_thread).pack(side="left", padx=5, ipady=5)
-    ttk.Button(btn_frame, text="⏹ interromper", command=interromper).pack(side="left", padx=5, ipady=5)
+    ttk.Button(btn_frame, text="▶ Executar Cata-Erro", command=executar_cata_erro_thread).pack(side="left", padx=5, ipady=5)
 
     style.aplicar_estilo(frame)
 
-    return frame, logs_widget, interromper
+    return frame, logs_widget, None

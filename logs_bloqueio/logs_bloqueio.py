@@ -4,7 +4,7 @@ import utils as u
 
 interrompido = False
 
-def executar_logs_bloqueio(caminho_planilha, print_log):
+def executar_logs_bloqueio(caminho_planilha, print_log, atualizar_progresso=None):
     """
     Executa a automação ES21.
     - caminho_planilha: caminho completo da planilha de contratos.
@@ -182,6 +182,8 @@ def executar_logs_bloqueio(caminho_planilha, print_log):
                 df = df[df['CONTRATOS'] != contrato]
                 df.to_excel(caminho_planilha, index=False)
 
+                if atualizar_progresso:
+                    atualizar_progresso(1)
             try:
                 session.StartTransaction("ES21")
             except Exception:

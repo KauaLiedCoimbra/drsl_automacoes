@@ -1,55 +1,60 @@
 import win32com.client
 
-def transcrever_sap_linear(print_log):
-    SapGuiAuto = win32com.client.GetObject("SAPGUI")
-    if not SapGuiAuto:
-        print_log("SAP GUI não está rodando")
-        return
-    
-    application = SapGuiAuto.GetScriptingEngine
-    connection = application.Children(0)
-    session = connection.Children(0)
 
-    linhas = []
+def transcrever_sap_linear(print_log, arquivo_saida="sap_tela_detalhada.txt"):
+    try:
+        print_log("▶ Iniciando transcrição da tela SAP...")
 
-    def percorrer_objetos(obj, caminho="app"):
         try:
-            tipo_obj = type(obj).__name__
-            obj_id = getattr(obj, 'Id', '')
-            obj_name = getattr(obj, 'Name', '')
-            obj_text = getattr(obj, 'Text', '')
-
-            # Monta a linha no formato desejado
-            caminho_completo = f"{caminho} ({tipo_obj})"
-            if obj_name:
-                caminho_completo += f" -> {obj_name}"
-            if obj_text:
-                caminho_completo += f" -> {obj_text}"
-
-            linhas.append(caminho_completo)
-
-            # Para grids/tabelas, percorre células (opcional)
-            if tipo_obj in ['GuiGridView', 'GuiTableControl']:
-                for r in range(obj.RowCount):
-                    for c in range(obj.ColumnCount):
-                        try:
-                            val = obj.GetCellValue(r, c)
-                        except:
-                            val = ""
-                        linhas.append(f"{caminho}/{obj_name}[{r},{c}] (Cell) -> {val}")
-
-            # Percorre filhos recursivamente
-            for i in range(obj.Children.Count):
-                percorrer_objetos(obj.Children(i), caminho + f"/{obj_name}[{i}]")
-
+            SapGuiAuto = win32com.client.GetObject("SAPGUI")
         except Exception:
-            pass
+            print_log("❌ Não foi possível acessar o SAP GUI. Verifique se o SAP está aberto e com scripting habilitado (Alt+F12 → Opções → Scripting).")
+            return
 
-    percorrer_objetos(session, caminho="/app/con[0]/ses[0]/wnd[0]")
+        application = SapGuiAuto.GetScriptingEngine
+        if application is None or application.Children.Count == 0:
+            print_log("❌ Nenhuma conexão SAP ativa encontrada. Abra o SAP e entre em uma sessão antes de executar.")
+            return
 
-    # Salva em TXT
-    with open("sap_transcricao_linear.txt", "w", encoding="utf-8") as f:
-        for linha in linhas:
-            f.write(linha + "\n")
-    
-    print_log(f"Transcrição linearizada concluída. {len(linhas)} linhas escritas.")
+        connection = application.Children(0)
+        if connection.Children.Count == 0:
+            print_log("❌ Nenhuma sessão aberta no SAP. Entre em um sistema (ex: SE16) e tente novamente.")
+            return
+
+        session = connection.Children(0)
+        window = session.ActiveWindow
+        print_log("✅ Conectado ao SAP GUI com sucesso.")
+
+
+        def percorrer_elementos(elemento, nivel=0):
+            linhas = []
+            try:
+                tipo = getattr(elemento, "Type", "Desconhecido")
+                texto = getattr(elemento, "Text", "")
+                linhas.append("  " * nivel + f"{elemento.Id} ({tipo}) -> {texto}")
+
+                # Captura conteúdo de tabelas
+                if tipo == "GuiGridView":
+                    colunas = elemento.ColumnCount
+                    linhas.append("  " * (nivel + 1) + f"--- Conteúdo da Tabela ({colunas} colunas) ---")
+                    for row in range(elemento.RowCount):
+                        celulas = [str(elemento.GetCellValue(row, col)) for col in range(colunas)]
+                        linhas.append("  " * (nivel + 1) + f"Linha {row}: " + " | ".join(celulas))
+            except Exception:
+                pass
+
+            children = getattr(elemento, "Children", None)
+            if children:
+                for child in children:
+                    linhas.extend(percorrer_elementos(child, nivel + 1))
+            return linhas
+
+        conteudo = percorrer_elementos(window)
+
+        with open(arquivo_saida, "w", encoding="utf-8") as f:
+            f.write("\n".join(conteudo))
+
+        print_log(f"💾 Transcrição salva em: {arquivo_saida}")
+        print_log("✅ Processo concluído com sucesso.")
+    except Exception as e:
+        print_log(f"❌ Erro durante execução: {e}")

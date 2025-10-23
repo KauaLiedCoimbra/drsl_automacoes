@@ -30,13 +30,8 @@ def criar_frame_sap_map(parent, btn_voltar=None):
     btn_frame.pack(fill="x", pady=(10, 0))
 
     def executar_mapeamento_thread():
-        def target():
-            try:
-                mapear_sap.transcrever_sap_linear(lambda msg: u.print_log(logs_widget, msg))
-            except Exception as e:
-                u.print_log(logs_widget, f"❌ Erro durante execução: {e}")
-
-        threading.Thread(target=target, daemon=True).start()
+    # executa diretamente, na thread principal
+        mapear_sap.transcrever_sap_linear(lambda msg: u.print_log(logs_widget, msg))
 
     # Botão de execução
     ttk.Button(btn_frame, text="▶ Executar Mapeamento SAP", command=executar_mapeamento_thread).pack(side="left", padx=5, ipady=5)

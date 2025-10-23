@@ -1,7 +1,12 @@
 import win32com.client
 
+# Variável global para armazenar o conteúdo gerado
+conteudo_gerado = []
 
-def transcrever_sap_linear(print_log, arquivo_saida="sap_tela_detalhada.txt"):
+def transcrever_sap_linear(print_log):
+    """Transcreve a tela SAP e armazena o conteúdo em memória"""
+    global conteudo_gerado
+    conteudo_gerado = []  # limpa o conteúdo anterior
     try:
         print_log("▶ Iniciando transcrição da tela SAP...")
 
@@ -24,7 +29,6 @@ def transcrever_sap_linear(print_log, arquivo_saida="sap_tela_detalhada.txt"):
         session = connection.Children(0)
         window = session.ActiveWindow
         print_log("✅ Conectado ao SAP GUI com sucesso.")
-
 
         def percorrer_elementos(elemento, nivel=0):
             linhas = []
@@ -49,12 +53,14 @@ def transcrever_sap_linear(print_log, arquivo_saida="sap_tela_detalhada.txt"):
                     linhas.extend(percorrer_elementos(child, nivel + 1))
             return linhas
 
-        conteudo = percorrer_elementos(window)
+        conteudo_gerado = percorrer_elementos(window)
 
-        with open(arquivo_saida, "w", encoding="utf-8") as f:
-            f.write("\n".join(conteudo))
-
-        print_log(f"💾 Transcrição salva em: {arquivo_saida}")
-        print_log("✅ Processo concluído com sucesso.")
+        print_log("✅ Transcrição concluída e armazenada em memória.")
     except Exception as e:
         print_log(f"❌ Erro durante execução: {e}")
+
+
+def obter_conteudo_gerado():
+    """Retorna o conteúdo armazenado em memória"""
+    global conteudo_gerado
+    return "\n".join(conteudo_gerado)

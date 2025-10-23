@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from es21.es21_frame import criar_frame_es21
+from logs_bloqueio.logs_bloqueio_frame import criar_frame_logs_bloqueio
 from mapear_sap.mapear_sap_frame import criar_frame_sap_map
 from cata_erro.cata_erro_frame import criar_frame_cata_erro
 import style
@@ -18,7 +18,7 @@ nucleos = {
     "Jurídico": []
 }
 sistemas_frames = {
-    "Logs de bloqueio": criar_frame_es21,
+    "Logs de bloqueio": criar_frame_logs_bloqueio,
     "Mapeamento SAP": criar_frame_sap_map,
     "Cata-erro": criar_frame_cata_erro
 }

@@ -1,11 +1,11 @@
 from tkinter import ttk, scrolledtext, filedialog
 import threading
-from es21 import es21
+from logs_bloqueio import logs_bloqueio
 import utils as u
 import style
 import pandas as pd
 
-def criar_frame_es21(parent, btn_voltar=None):
+def criar_frame_logs_bloqueio(parent, btn_voltar=None):
     """Cria o frame completo do ES21 com logs e botões"""
     frame = ttk.Frame(parent, padding=10)
     if btn_voltar:
@@ -46,7 +46,7 @@ def criar_frame_es21(parent, btn_voltar=None):
         else:
             u.print_log(logs_widget, "⚠ Nenhum arquivo selecionado")
 
-    def executar_es21_thread():
+    def executar_logs_bloqueio_thread():
         nonlocal caminho_planilha
         if not caminho_planilha:
             u.print_log(logs_widget, "❌ Nenhum arquivo Excel selecionado.")
@@ -55,17 +55,17 @@ def criar_frame_es21(parent, btn_voltar=None):
         def target():
             nonlocal df_resultado
             try:
-                df_resultado = es21.executar_es21(caminho_planilha, lambda msg: u.print_log(logs_widget, msg))
+                df_resultado = logs_bloqueio.executar_logs_bloqueio(caminho_planilha, lambda msg: u.print_log(logs_widget, msg))
                 u.print_log(logs_widget, "✅ Execução concluída. Dados prontos para download.")
             except Exception as e:
                 u.print_log(logs_widget, f"❌ Erro durante execução: {e}")
             finally:
-                es21.interrompido = False
+                logs_bloqueio.interrompido = False
 
         threading.Thread(target=target, daemon=True).start()
 
     def interromper():
-        es21.interrompido = True
+        logs_bloqueio.interrompido = True
         u.print_log(logs_widget, "⚠ Interrupção solicitada pelo usuário")
 
     def baixar_arquivo():
@@ -77,7 +77,7 @@ def criar_frame_es21(parent, btn_voltar=None):
             caminho = filedialog.asksaveasfilename(
                 defaultextension=".xlsx",
                 filetypes=[("Excel files", "*.xlsx")],
-                title="Salvar planilha ES21"
+                title="Salvar planilha logs_bloqueio"
             )
             if caminho:
                 df_resultado.to_excel(caminho, index=False)
@@ -85,7 +85,7 @@ def criar_frame_es21(parent, btn_voltar=None):
    
     # Botões
     ttk.Button(btn_frame, text="📎 Anexar planilha", command=anexar_planilha).pack(side="left", padx=5, ipady=5)
-    ttk.Button(btn_frame, text="▶ Executar ES21", command=executar_es21_thread).pack(side="left", padx=5, ipady=5)
+    ttk.Button(btn_frame, text="▶ Executar", command=executar_logs_bloqueio_thread).pack(side="left", padx=5, ipady=5)
     ttk.Button(btn_frame, text="⏹ interromper", command=interromper).pack(side="left", padx=5, ipady=5)
     ttk.Button(btn_frame, text="💾 Baixar resultados", command=baixar_arquivo).pack(side="left", padx=5, ipady=5)
 

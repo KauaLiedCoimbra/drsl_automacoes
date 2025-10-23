@@ -4,7 +4,7 @@ import utils as u
 
 interrompido = False
 
-def executar_es21(caminho_planilha, print_log):
+def executar_logs_bloqueio(caminho_planilha, print_log):
     """
     Executa a automação ES21.
     - caminho_planilha: caminho completo da planilha de contratos.

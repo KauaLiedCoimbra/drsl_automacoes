@@ -42,7 +42,7 @@ def executar_logs_bloqueio(caminho_planilha, print_log):
     novas_colunas = []
     
     for col in df.columns:
-        novo_nome = next((nome_padrao for nome_padrao, variantes in grupos.items() if col in variantes), col)
+        novo_nome = next((nome_padrao for nome_padrao, variantes in grupos.items() if col.upper() in [v.upper() for v in variantes]), col)
         novas_colunas.append(novo_nome)
     df.columns = novas_colunas
 
@@ -179,6 +179,8 @@ def executar_logs_bloqueio(caminho_planilha, print_log):
             if registros:
                 todos_registros.extend(registros)
                 print_log(f"✅ Contrato {contrato} processado. | Restam {contratos_restantes} contratos")
+                df = df[df['CONTRATOS'] != contrato]
+                df.to_excel(caminho_planilha, index=False)
 
             try:
                 session.StartTransaction("ES21")

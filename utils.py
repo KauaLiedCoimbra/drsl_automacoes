@@ -1,4 +1,6 @@
 import re
+import psutil
+import time
 
 def is_data(data):
     padrao_data = re.compile(r"^\d{2}\.\d{2}\.\d{4}$")
@@ -31,3 +33,10 @@ def normalizar_colunas(planilha):
         novas_colunas.append(c)
     planilha.columns = novas_colunas
     return planilha
+
+def fechar_sap_forcadamente():
+    """Mata todos os processos SAP GUI ativos."""
+    for proc in psutil.process_iter(['name']):
+        if proc.info['name'] and 'saplogon' in proc.info['name'].lower():
+            proc.kill()
+    time.sleep(2)  # espera o processo fechar

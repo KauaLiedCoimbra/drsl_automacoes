@@ -3,14 +3,13 @@ import threading
 from es21 import es21
 import utils as u
 import style
+import pandas as pd
 
 def criar_frame_es21(parent, btn_voltar=None):
     """Cria o frame completo do ES21 com logs e botões"""
     frame = ttk.Frame(parent, padding=10)
-    btn_voltar.place(x=10, y=10) 
-
-    logs_frame = ttk.Frame(frame)
-    logs_frame.pack(fill="both", expand=True)
+    if btn_voltar:
+        btn_voltar.place(x=10, y=10)
 
     # ScrolledText para logs
     logs_widget = scrolledtext.ScrolledText(
@@ -33,6 +32,7 @@ def criar_frame_es21(parent, btn_voltar=None):
     btn_frame.pack(fill="x", pady=(10,0))
 
     caminho_planilha = None
+    df_resultado = pd.DataFrame()
 
     def anexar_planilha():
         nonlocal caminho_planilha
@@ -53,12 +53,14 @@ def criar_frame_es21(parent, btn_voltar=None):
             return
         
         def target():
+            nonlocal df_resultado
             try:
-                es21.executar_es21(caminho_planilha, lambda msg: u.print_log(logs_widget, msg))
+                df_resultado = es21.executar_es21(caminho_planilha, lambda msg: u.print_log(logs_widget, msg))
+                u.print_log(logs_widget, "✅ Execução concluída. Dados prontos para download.")
             except Exception as e:
                 u.print_log(logs_widget, f"❌ Erro durante execução: {e}")
             finally:
-                es21.interrompido = False  # reset após execução
+                es21.interrompido = False
 
         threading.Thread(target=target, daemon=True).start()
 
@@ -66,10 +68,26 @@ def criar_frame_es21(parent, btn_voltar=None):
         es21.interrompido = True
         u.print_log(logs_widget, "⚠ Interrupção solicitada pelo usuário")
 
+    def baixar_arquivo():
+            nonlocal df_resultado
+            if df_resultado.empty:
+                u.print_log(logs_widget, "❌ Nenhum dado disponível para download.")
+                return
+
+            caminho = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx")],
+                title="Salvar planilha ES21"
+            )
+            if caminho:
+                df_resultado.to_excel(caminho, index=False)
+                u.print_log(logs_widget, f"✅ Arquivo salvo em: {caminho}")
+   
     # Botões
     ttk.Button(btn_frame, text="📎 Anexar planilha", command=anexar_planilha).pack(side="left", padx=5, ipady=5)
     ttk.Button(btn_frame, text="▶ Executar ES21", command=executar_es21_thread).pack(side="left", padx=5, ipady=5)
     ttk.Button(btn_frame, text="⏹ interromper", command=interromper).pack(side="left", padx=5, ipady=5)
+    ttk.Button(btn_frame, text="💾 Baixar resultados", command=baixar_arquivo).pack(side="left", padx=5, ipady=5)
 
     style.aplicar_estilo(frame)
 

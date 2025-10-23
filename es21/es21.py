@@ -75,7 +75,7 @@ def executar_es21(caminho_planilha, print_log):
     
     total_contratos = len(df)
     scroll = session.findById("wnd[0]/usr").verticalScrollbar
-    
+
     try:
         for index, row in df.iterrows():
             instalacao = row['INSTALACAO']
@@ -199,5 +199,8 @@ def executar_es21(caminho_planilha, print_log):
         session.findById("wnd[0]").sendVKey(3)
     except Exception:
         pass
+    
+    df_final = pd.DataFrame(todos_registros)
+    return df_final
 
     

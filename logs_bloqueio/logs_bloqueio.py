@@ -3,9 +3,26 @@ import pandas as pd
 import utils as u
 import re
 import os
+import json
+import sys
 
 interrompido = False
 
+# ------------------------------------------
+# Importação JSON com relação RExNOMExE-MAIL
+# ------------------------------------------
+def caminho_recurso(relativo):
+    # Caminho dentro do exe ou em desenvolvimento
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, relativo)
+    return os.path.join(os.path.abspath("."), relativo)
+
+# Carrega o JSON embutido
+with open(caminho_recurso("re_nome_email.json"), "r", encoding="utf-8") as f:
+    re_nomes = json.load(f)  # Será um dicionário {RE: {"Nome": ..., "E-mail": ...}}
+# ------------------------------------------
+# Extração dados da planilha original
+# ------------------------------------------
 def extrair_dados_planilha(caminho_planilha, print_log, caminho_saida="dados_coletados.xlsx"):
     # Ler a planilha
     try:
@@ -66,7 +83,9 @@ def extrair_dados_planilha(caminho_planilha, print_log, caminho_saida="dados_col
     print_log(f"✅ Dados extraídos e salvos em '{caminho_saida}'")
 
     return caminho_saida, len(df_saida)
-
+# ------------------------------------------
+# Processamento SAP
+# ------------------------------------------
 def executar_logs_bloqueio(caminho_filtrado=None, print_log=print, atualizar_progresso=None):
     """
     Atualiza a planilha existente criando uma aba 'Coleta' com todas as informações.
@@ -154,7 +173,9 @@ def executar_logs_bloqueio(caminho_filtrado=None, print_log=print, atualizar_pro
                     if u.is_data(texto) and not (i > 0 and todos[i - 1]["texto"] in ["Val.antigo:", "Val.novo:"]):
                         if texto != data_atual:
                             data_atual = texto
-                            re_atual = todos[i - 1]["texto"] if i > 0 else ""
+                            re_atual = str(todos[i - 1]["texto"] if i > 0 else "").strip().lstrip("0")
+                            re_nome = re_nomes.get(re_atual, {}).get("nome", "Não encontrado")
+                            re_email = re_nomes.get(re_atual, {}).get("email", "Não encontrado")
                         
                     # captura pares de valores dentro da mesma data
                     if texto == "Val.antigo:" and i + 1 < len(todos):
@@ -189,8 +210,10 @@ def executar_logs_bloqueio(caminho_filtrado=None, print_log=print, atualizar_pro
                             "Motivo": motivo,
                             "RE": re_atual,
                             "Data": data_atual,
-                            "VAL.ANTIGO:": val_antigo or "",
-                            "VAL.NOVO:": val_novo or "",
+                            "Val.antigo": val_antigo or "",
+                            "Val.novo": val_novo or "",
+                            "Nome": re_nome,
+                            "E-mail": re_email,
                         }
                         registros.append(linha_nova)
 

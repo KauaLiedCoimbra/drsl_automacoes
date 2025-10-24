@@ -11,8 +11,9 @@ __pycache__/
 .dist/
 .build/
 
-# Ignorar arquivos .spec
+# Ignorar arquivos
 *.spec
+*.json
 
 # Ignorar arquivos de sistema
 .DS_Store

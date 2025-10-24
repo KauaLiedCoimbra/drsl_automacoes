@@ -40,8 +40,8 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
 # Calcula o tamanho da janela proporcional à tela
-window_width = int(screen_width * 0.9)
-window_height = int(screen_height * 0.85)
+window_width = int(screen_width * 0.7)
+window_height = int(screen_height * 0.75)
 
 # Define limites para não ficar pequeno demais ou gigante
 window_width = max(1000, min(window_width, 1600))

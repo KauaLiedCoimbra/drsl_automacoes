@@ -65,9 +65,9 @@ def extrair_dados_planilha(caminho_planilha, print_log, caminho_saida="dados_col
     df_saida.to_excel(caminho_saida, index=False)
     print_log(f"✅ Dados extraídos e salvos em '{caminho_saida}'")
 
-    return caminho_saida
+    return caminho_saida, len(df_saida)
 
-def executar_logs_bloqueio(caminho_planilha=None, print_log=print, atualizar_progresso=None):
+def executar_logs_bloqueio(caminho_filtrado=None, print_log=print, atualizar_progresso=None):
     """
     Atualiza a planilha existente criando uma aba 'Coleta' com todas as informações.
     Recebe a planilha com Instalação, Contrato e Motivo preenchidos.
@@ -75,7 +75,8 @@ def executar_logs_bloqueio(caminho_planilha=None, print_log=print, atualizar_pro
     global interrompido
     todos_registros = []
 
-    caminho_filtrado = extrair_dados_planilha(caminho_planilha, print_log)
+    print_log("🔄 Iniciando processamento dos logs de bloqueio...")
+
     if caminho_filtrado is None or not os.path.exists(caminho_filtrado):
         print_log("❌ Nenhum dado para processar após extração.")
         return None

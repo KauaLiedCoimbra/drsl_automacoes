@@ -117,12 +117,20 @@ def criar_frame_logs_bloqueio(parent, btn_voltar=None):
             nonlocal df_resultado
             try:
                 # Lê a planilha e inicializa a barra de progresso
-                df = pd.read_excel(caminho_planilha)
-                iniciar_barra(len(df))
-
-                # Chama a função que processa os contratos
-                df_resultado = logs_bloqueio.executar_logs_bloqueio(
+                caminho_filtrado, total_registros = logs_bloqueio.extrair_dados_planilha(
                     caminho_planilha,
+                    lambda msg: u.print_log(logs_widget, msg)
+                )
+
+                if total_registros == 0:
+                    u.print_log(logs_widget, "❌ Nenhum registro após filtragem.")
+                    return
+
+                iniciar_barra(total_registros)  # barra com tamanho correto
+
+                # Processa a planilha filtrada no SAP
+                df_resultado = logs_bloqueio.executar_logs_bloqueio(
+                    caminho_filtrado,  # passa o arquivo filtrado
                     lambda msg: u.print_log(logs_widget, msg),
                     atualizar_progresso=lambda passo=1: frame.after(0, lambda: atualizar_barra(passo))
                 )

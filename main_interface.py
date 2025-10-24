@@ -5,6 +5,8 @@ from mapear_sap.mapear_sap_frame import criar_frame_sap_map
 from cata_erro.cata_erro_frame import criar_frame_cata_erro
 import style
 import ctypes
+import os
+import sys
 
 # ---------------------------
 # Dados iniciais
@@ -28,10 +30,50 @@ frames_criados = {}
 # ---------------------------
 root = tk.Tk()
 root.title("Automações do Kauã")
-root.geometry("1100x800+200+50")
-root.resizable(False, False)
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
-root.tk.call('tk', 'scaling', 2)
+scale_factor = root.winfo_fpixels('1i') / 72  # pixels por polegada / DPI base
+root.tk.call('tk', 'scaling', 2.0)
+# ---------------------------
+# Tamanho dinâmico da janela
+# ---------------------------
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+# Calcula o tamanho da janela proporcional à tela
+window_width = int(screen_width * 0.9)
+window_height = int(screen_height * 0.85)
+
+# Define limites para não ficar pequeno demais ou gigante
+window_width = max(1000, min(window_width, 1600))
+window_height = max(700, min(window_height, 1000))
+
+# Centraliza a janela
+x_pos = int((screen_width - window_width) / 2)
+y_pos = int((screen_height - window_height) / 4)
+
+root.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+root.resizable(False, False)
+# ---------------------------
+# Ícone
+# ---------------------------
+if getattr(sys, 'frozen', False):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.abspath(".")
+
+icon_path = os.path.join(base_path, "robotic-hand.ico")
+
+# Ícone da janela principal
+if os.path.exists(icon_path):
+    root.iconbitmap(icon_path)
+
+# Ícone da barra de tarefas (Windows)
+try:
+    from ctypes import windll
+    appid = u"kaua.automatron"  # identificador único (pode mudar o nome)
+    windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
+except Exception:
+    pass
 # ---------------------------
 # Frames
 # ---------------------------
@@ -126,7 +168,7 @@ btn_voltar.place_forget()      # começa escondido
 # ---------------------------
 # Títulos e botões dos núcleos
 # ---------------------------
-ttk.Label(frame_nucleos, text="Automações do Kauã",
+ttk.Label(frame_nucleos, text="DRSL AUTOMAÇÕES",
           font=("Consolas", 26, "bold"), foreground="#ff79c6", background=style.DRACULA_BG).grid(row=0, column=0, columnspan=3, pady=(10))
 ttk.Label(frame_nucleos, text="Escolha o núcleo:",
           font=("Consolas", 20), foreground=style.DRACULA_FG, background=style.DRACULA_BG).grid(row=1, column=0, columnspan=3, pady=(10))

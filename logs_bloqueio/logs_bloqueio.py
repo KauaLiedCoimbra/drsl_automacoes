@@ -1,64 +1,89 @@
 import win32com.client
 import pandas as pd
 import utils as u
+import re
+import os
 
 interrompido = False
 
-def executar_logs_bloqueio(caminho_planilha, print_log, atualizar_progresso=None):
+def extrair_dados_planilha(caminho_planilha, print_log, caminho_saida="dados_coletados.xlsx"):
+    # Ler a planilha
+    try:
+        df = pd.read_excel(caminho_planilha)
+    except Exception as e:
+        print_log(f"❌ Erro ao abrir a planilha {caminho_planilha}: {e}")
+        return None
+
+    # Aplicar filtros
+    df_filtrado = df[
+    df['EMPRESA'].str.strip().isin(['D008', 'D009']) &
+    df['CÓD DO ERRO'].fillna(0).astype(int).isin([63]) &
+    df['DESCRIÇÃO TIPO'].str.strip().isin([
+        'Alta/Media Tensão: Optante',
+        'Monômia',
+        'Monômia Tarifa Branca'
+    ])
+]
+
+    if df_filtrado.empty:
+        print_log("⚠ Nenhum registro após aplicar os filtros.")
+        return None
+
+    # Listas para armazenar os dados extraídos
+    instalacoes = []
+    contratos = []
+    motivos = []
+
+    # Expressões regulares para extrair contrato e motivo
+    contrato_regex = r'Contrato (\d+) bloqueado'
+    motivo_regex = r'motivo bloqueio cálculo (\d+)'
+
+    for _, row in df_filtrado.iterrows():
+        instalacao = row['INSTALAÇÃO']
+        descricao = str(row['DESCRIÇÃO DO ERRO'])
+
+        # Extrair contrato e motivo
+        contrato_match = re.search(contrato_regex, descricao)
+        motivo_match = re.search(motivo_regex, descricao)
+
+        contrato = contrato_match.group(1) if contrato_match else ''
+        motivo = motivo_match.group(1) if motivo_match else ''
+
+        # Armazenar
+        instalacoes.append(instalacao)
+        contratos.append(contrato)
+        motivos.append(motivo)
+
+    # Criar novo DataFrame
+    df_saida = pd.DataFrame({
+        'Instalação': instalacoes,
+        'Contrato': contratos,
+        'Motivo': motivos,
+    })
+
+    # Salvar planilha de saída
+    df_saida.to_excel(caminho_saida, index=False)
+    print_log(f"✅ Dados extraídos e salvos em '{caminho_saida}'")
+
+    return caminho_saida
+
+def executar_logs_bloqueio(caminho_planilha=None, print_log=print, atualizar_progresso=None):
     """
-    Executa a automação ES21.
-    - caminho_planilha: caminho completo da planilha de contratos.
-    - print_log: função para exibir logs na interface (substitui print()).
+    Atualiza a planilha existente criando uma aba 'Coleta' com todas as informações.
+    Recebe a planilha com Instalação, Contrato e Motivo preenchidos.
     """
     global interrompido
     todos_registros = []
 
-    def salvar_colheita(df_dados_coletados, todos_registros, print_log):
-        if not todos_registros:
-            return
-        df_dados_coletados_save = pd.concat([df_dados_coletados, pd.DataFrame(todos_registros)], ignore_index=True)
-        try:
-            with pd.ExcelWriter(f"dados_coletados.xlsx", engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-                df_dados_coletados_save.to_excel(writer, sheet_name="Coleta", index=False)
-            print_log("✅ Dados salvos em 'dados_coletados.xlsx'")
-        except FileNotFoundError:
-            df_dados_coletados_save.to_excel("dados_coletados.xlsx", index=False)
-            print_log("✅ Arquivo 'dados_coletados.xlsx' criado do zero.")
+    caminho_filtrado = extrair_dados_planilha(caminho_planilha, print_log)
+    if caminho_filtrado is None or not os.path.exists(caminho_filtrado):
+        print_log("❌ Nenhum dado para processar após extração.")
+        return None
 
-    # Lê planilhas
-    try:
-        df = pd.read_excel(caminho_planilha)
-
-    except Exception as e:
-        print_log(f"❌ Erro ao abrir a planilha {caminho_planilha}: {e}")
-        return
-    
-    df = u.normalizar_colunas(df)
-    grupos = {
-        "INSTALACAO": ["INSTALACAO", "INSTALACOES"], 
-        "CONTRATOS": ["CONTRATOS", "CONTRATO"], 
-        "MOTIVO": ["MOTIVO", "MOTIVOS", "ERRO", "LOG", "ERROS", "LOGS"], 
-    }
-    novas_colunas = []
-    
-    for col in df.columns:
-        novo_nome = next((nome_padrao for nome_padrao, variantes in grupos.items() if col.upper() in [v.upper() for v in variantes]), col)
-        novas_colunas.append(novo_nome)
-    df.columns = novas_colunas
-
-    try:
-        df_dados_coletados = pd.read_excel("dados_coletados.xlsx")
-    except FileNotFoundError:
-        df_dados_coletados = pd.DataFrame(columns=['Instalacao','Contrato','RE','Data','VAL.ANTIGO:','VAL.NOVO:'])
-
-    # Corrige colunas
-
-    for col in ['INSTALACAO','CONTRATOS', 'MOTIVO']:
-        if col in df.columns:
-            df[col] = df[col].apply(lambda x: str(int(x)) if isinstance(x, float) else str(x)).str.strip()
-        else:
-            print_log(f"Coluna {col} não encontrada na planilha.")
-            return
+    # --- Preparar DataFrame ---
+    df = pd.read_excel(caminho_filtrado)
+    for col in ['Instalação', 'Contrato', 'Motivo']:
+        df[col] = df[col].apply(lambda x: str(int(x)) if pd.notna(x) and isinstance(x, float) else str(x).strip())
 
     # Conexão SAP
     try:
@@ -72,20 +97,20 @@ def executar_logs_bloqueio(caminho_planilha, print_log, atualizar_progresso=None
     session.findById("wnd[0]").maximize()
     session.findById("wnd[0]/tbar[0]/okcd").text = "es21"
     session.findById("wnd[0]").sendVKey(0)
-    
+
     total_contratos = len(df)
     scroll = session.findById("wnd[0]/usr").verticalScrollbar
 
     try:
         for index, row in df.iterrows():
-            instalacao = row['INSTALACAO']
-            contrato = row['CONTRATOS']
-            motivo = row["MOTIVO"].zfill(2)
-            contratos_restantes = total_contratos - (index + 1)
+            instalacao = row['Instalação']
+            contrato = row['Contrato']
+            motivo = row['Motivo'].zfill(2)
+
             print_log(f'🔍 Processando contrato {contrato}... Motivo: {motivo}')
 
             if interrompido:
-                print_log(f"⚠ Execução interrompida pelo usuário. Salvando dados coletados até agora...")
+                print_log(f"⚠ Execução interrompida pelo usuário.")
                 break
 
             # Pesquisa contrato
@@ -95,12 +120,14 @@ def executar_logs_bloqueio(caminho_planilha, print_log, atualizar_progresso=None
             session.findById("wnd[0]").sendVKey(19)
             session.findById("wnd[0]").sendVKey(47)
 
-            # Inicializa variáveis
             motivo_encontrado = False
-            registros = []
             data_atual = None
             re_atual = None
+            val_antigo = ""
+            val_novo = ""
+            registros = []
 
+            # Loop para ler elementos
             while not motivo_encontrado:
                 if interrompido:
                     break
@@ -158,6 +185,7 @@ def executar_logs_bloqueio(caminho_planilha, print_log, atualizar_progresso=None
                         linha_nova = {
                             "Instalacao": instalacao,
                             "Contrato": contrato,
+                            "Motivo": motivo,
                             "RE": re_atual,
                             "Data": data_atual,
                             "VAL.ANTIGO:": val_antigo or "",
@@ -176,14 +204,14 @@ def executar_logs_bloqueio(caminho_planilha, print_log, atualizar_progresso=None
                         break
                     session.findById("wnd[0]").sendVKey(82)
 
+            # Adiciona linha no DataFrame de coleta
             if registros:
-                todos_registros.extend(registros)
-                print_log(f"✅ Contrato {contrato} processado. | Restam {contratos_restantes} contratos")
-                df = df[df['CONTRATOS'] != contrato]
-                df.to_excel(caminho_planilha, index=False)
+                todos_registros.extend(registros)  # mantém a lógica antiga
+                print_log(f"✅ Contrato {contrato} processado. Restam {total_contratos - (index + 1)} contratos.")
 
                 if atualizar_progresso:
                     atualizar_progresso(1)
+
             try:
                 session.StartTransaction("ES21")
             except Exception:
@@ -191,20 +219,13 @@ def executar_logs_bloqueio(caminho_planilha, print_log, atualizar_progresso=None
 
     except Exception as e:
         print_log(f"❌ Ocorreu um erro: {e}")
-        salvar_colheita(df_dados_coletados, todos_registros, print_log)
 
-    # Salva no final
+    # Cria DataFrame a partir de todos_registros
     if todos_registros:
-        salvar_colheita(df_dados_coletados, todos_registros, print_log)
-        print_log('🏁 Processamento finalizado. Resultados em "dados_coletados.xlsx".')
+        df_coleta = pd.DataFrame(todos_registros)
 
-    try:
-        session.StartTransaction("ES21")
-        session.findById("wnd[0]").sendVKey(3)
-    except Exception:
-        pass
-    
-    df_final = pd.DataFrame(todos_registros)
-    return df_final
+        # Salva em uma aba nova 'Coleta'
+        with pd.ExcelWriter(caminho_filtrado, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            df_coleta.to_excel(writer, sheet_name="Coleta", index=False)
 
-    
+        print_log(f'🏁 Processamento finalizado. Aba "Coleta" atualizada em: {caminho_filtrado}')

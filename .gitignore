@@ -8,6 +8,11 @@ __pycache__/
 
 # Ignorar histórico do VS Code (se estiver usando)
 .history/
+.dist/
+.build/
+
+# Ignorar arquivos .spec
+*.spec
 
 # Ignorar arquivos de sistema
 .DS_Store

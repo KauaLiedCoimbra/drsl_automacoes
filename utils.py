@@ -2,13 +2,33 @@ import re
 import psutil
 import time
 
+DATA_REGEX = r"^(\d{2})\.(\d{2})\.(\d{4})$"
+
 def is_data(data):
-    padrao_data = re.compile(r"^\d{2}\.\d{2}\.\d{4}$")
+    padrao_data = re.compile(DATA_REGEX)
     if padrao_data.match(data):
         return True
     else:
         return False
     
+def extrair_ano(data):
+    match = re.match(DATA_REGEX, data)
+    if match:
+        return match.group(3)  # captura o ano
+    return None
+
+def extrair_mes(data):
+    match = re.match(DATA_REGEX, data)
+    if match:
+        return match.group(2)  # captura o mês
+    return None
+
+def extrair_dia(data):
+    match = re.match(DATA_REGEX, data)
+    if match:
+        return match.group(1)  # captura o dia
+    return None
+
 def print_log(widget, msg):
     if not widget:
         return

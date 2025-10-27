@@ -5,6 +5,9 @@ import re
 import os
 import json
 import sys
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Border, Side, PatternFill, Alignment
+from openpyxl.formatting.rule import FormulaRule
 
 interrompido = False
 
@@ -79,10 +82,193 @@ def extrair_dados_planilha(caminho_planilha, print_log, caminho_saida="dados_col
     })
 
     # Salvar planilha de saída
-    df_saida.to_excel(caminho_saida, index=False)
+    df_saida.to_excel(caminho_saida, sheet_name="Dados", index=False)
     print_log(f"✅ Dados extraídos e salvos em '{caminho_saida}'")
 
     return caminho_saida, len(df_saida)
+# ------------------------------------------
+# Tratamento planilha
+# ------------------------------------------
+def tratar_planilha(caminho_planilha, print_log=print):
+    """
+    Trata a planilha adicionando colunas, formatações condicionais e estilos.
+    """
+    wb = load_workbook(caminho_planilha)
+    
+    # Aba Coleta
+    if "Coleta" not in wb.sheetnames:
+        print_log("❌ Aba 'Coleta' não encontrada.")
+        return
+    ws = wb["Coleta"]
+
+    # Aba Encontrados
+    if "Encontrados" not in wb.sheetnames:
+        ws_encontrados = wb.create_sheet("Encontrados")
+        ws_encontrados.cell(row=1, column=1, value="Instalação")
+        ws_encontrados["A1"].font = Font(name="Calibri", size=14, bold=True)
+        ws_encontrados["A1"].border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        ws_encontrados["A1"].alignment = Alignment(horizontal="center", vertical="center")
+        print_log("✅ Aba 'Encontrados' criada vazia.")
+
+    # -----------------------------
+    # Bordas laterais e alinhamento
+    # -----------------------------
+    borda_lateral = Border(
+        left=Side(style='thin', color="000000"),
+        right=Side(style='thin', color="000000")
+    )
+
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            # borda esquerda/direita
+            if cell.border is None:
+                cell.border = borda_lateral
+            else:
+                cell.border = Border(
+                    left=Side(style='thin', color="000000"),
+                    right=Side(style='thin', color="000000"),
+                    top=cell.border.top,
+                    bottom=cell.border.bottom
+                )
+            # centraliza
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # -----------------------------
+    # Formata cabeçalhos e dados existentes
+    # -----------------------------
+    for col in range(1, ws.max_column + 1):
+        ws.cell(row=1, column=col).font = Font(name="Calibri", size=14, bold=True)
+        for row in range(2, ws.max_row + 1):
+            ws.cell(row=row, column=col).font = Font(name="Calibri", size=11)
+
+    ultima_coluna = ws.max_column
+
+    # -----------------------------
+    # Coluna 'Encontrado?'
+    # -----------------------------
+    col_encontrado = ultima_coluna + 1
+    ws.cell(row=1, column=col_encontrado, value="Encontrado?")
+    ws.cell(row=1, column=col_encontrado).font = Font(name="Calibri", size=14, bold=True)
+    ws.cell(row=1, column=col_encontrado).border = borda_lateral
+    ws.cell(row=1, column=col_encontrado).alignment = Alignment(horizontal="center", vertical="center")
+
+    for row in range(2, ws.max_row + 1):
+        ws.cell(
+            row=row,
+            column=col_encontrado,
+            value=f'=IF(ISERROR(VLOOKUP(A{row},Encontrados!A:A,1,FALSE)),"Não","Sim")'
+        )
+        ws.cell(row=row, column=col_encontrado).font = Font(name="Calibri", size=11)
+        ws.cell(row=row, column=col_encontrado).alignment = Alignment(horizontal="center", vertical="center")
+
+    # -----------------------------
+    # Coluna 'Bloco'
+    # -----------------------------
+    col_bloco = col_encontrado + 1
+    ws.cell(row=1, column=col_bloco, value="Bloco")
+    ws.cell(row=1, column=col_bloco).font = Font(name="Calibri", size=14, bold=True)
+    ws.cell(row=1, column=col_bloco).border = borda_lateral
+    ws.cell(row=1, column=col_bloco).alignment = Alignment(horizontal="center", vertical="center")
+    letra_bloco = ws.cell(row=1, column=col_bloco).column_letter
+
+    ws.cell(row=2, column=col_bloco, value=1).font = Font(name="Calibri", size=11)
+    ws.cell(row=2, column=col_bloco).alignment = Alignment(horizontal="center", vertical="center")
+
+    for row in range(3, ws.max_row + 1):
+        ws.cell(
+            row=row,
+            column=col_bloco,
+            value=f'=IF(A{row}<>A{row-1},{letra_bloco}{row-1}+1,{letra_bloco}{row-1})'
+        )
+        ws.cell(row=row, column=col_bloco).font = Font(name="Calibri", size=11)
+        ws.cell(row=row, column=col_bloco).alignment = Alignment(horizontal="center", vertical="center")
+
+    print_log("✅ Colunas 'Encontrado?' e 'Bloco' adicionadas e centralizadas.")
+
+    # -----------------------------
+    # Borda inferior condicional quando instalação muda
+    # -----------------------------
+    borda_condicional = Border(
+        left=Side(style='thin', color="000000"),
+        right=Side(style='thin', color="000000"),
+        bottom=Side(style='thin', color="000000")
+    )
+    ws.conditional_formatting.add(
+        "$A$2:$K$1048576",
+        FormulaRule(formula=["=$A3<>$A2"], border=borda_condicional)
+    )
+
+    # -----------------------------
+    # Formatações condicionais adicionais para 'Bloco'
+    # -----------------------------
+    fill1 = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
+    fill2 = PatternFill(start_color="B0E5FA", end_color="B0E5FA", fill_type="solid")
+    fill3 = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+    fill4 = PatternFill(start_color="D9EAF7", end_color="D9EAF7", fill_type="solid")
+
+    ws.conditional_formatting.add(
+        "$A$2:$K$1048576",
+        FormulaRule(formula=["AND(ISODD($M2),ISODD(ROW()-ROW($A$2)+1))"], fill=fill1)
+    )
+    ws.conditional_formatting.add(
+        "$A$2:$K$1048576",
+        FormulaRule(formula=["AND(ISEVEN($M2),ISODD(ROW()-ROW($A$2)+1))"], fill=fill2)
+    )
+    ws.conditional_formatting.add(
+        "$A$2:$K$7200",
+        FormulaRule(formula=["ISODD($M2)"], fill=fill3)
+    )
+    ws.conditional_formatting.add(
+        "$A$2:$K$7200",
+        FormulaRule(formula=["ISEVEN($M2)"], fill=fill4)
+    )
+
+    # -----------------------------
+    # Ajusta largura das colunas automaticamente
+    # -----------------------------
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        ws.column_dimensions[col_letter].width = max_length + 2
+    # -----------------------------
+    # Ajusta cor de fundo e fonte das colunas de dados adicionais
+    # -----------------------------
+    fill_preto = PatternFill(start_color="000000", end_color="000000", fill_type="solid")
+    font_branco = Font(color="FFFFFF", name="Calibri", size=11)
+
+    # Coluna L = 12
+    col_inicio = 12  # L
+    linha_final = ws.max_row  # até a última linha existente (ou defina outro valor se quiser preencher mais)
+
+    for col in range(col_inicio, ws.max_column + 1):
+        for row in range(1, linha_final + 1):
+            cell = ws.cell(row=row, column=col)
+            cell.fill = fill_preto
+            cell.font = font_branco
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+    # -----------------------------
+    # Ajusta ordem das planilhas
+    # -----------------------------
+    if "Dados" in wb.sheetnames:
+        ws_dados = wb["Dados"]
+        wb._sheets.remove(ws_dados)  # Remove da posição atual
+        wb._sheets.append(ws_dados)  # Adiciona no final
+    # -----------------------------
+    # Salva alterações
+    # -----------------------------
+    wb.save(caminho_planilha)
+    print_log(f"🏁 Planilha tratada e salva: {caminho_planilha}")
 # ------------------------------------------
 # Processamento SAP
 # ------------------------------------------
@@ -205,11 +391,13 @@ def executar_logs_bloqueio(caminho_filtrado=None, print_log=print, atualizar_pro
                             j += 1
 
                         linha_nova = {
-                            "Instalacao": instalacao,
+                            "Instalação": instalacao,
                             "Contrato": contrato,
                             "Motivo": motivo,
                             "RE": re_atual,
                             "Data": data_atual,
+                            "Ano": u.extrair_ano(data_atual),
+                            "Mês": u.extrair_mes(data_atual),
                             "Val.antigo": val_antigo or "",
                             "Val.novo": val_novo or "",
                             "Nome": re_nome,
@@ -247,9 +435,13 @@ def executar_logs_bloqueio(caminho_filtrado=None, print_log=print, atualizar_pro
     # Cria DataFrame a partir de todos_registros
     if todos_registros:
         df_coleta = pd.DataFrame(todos_registros)
+        df_encontrados = pd.DataFrame(columns=['Instalação'])
 
         # Salva em uma aba nova 'Coleta'
         with pd.ExcelWriter(caminho_filtrado, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
             df_coleta.to_excel(writer, sheet_name="Coleta", index=False)
+            df_encontrados.to_excel(writer, sheet_name="Encontrados", index=False)
+
+        tratar_planilha(caminho_filtrado, print_log)
 
         print_log(f'🏁 Processamento finalizado. Aba "Coleta" atualizada em: {caminho_filtrado}')

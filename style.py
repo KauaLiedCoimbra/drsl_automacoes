@@ -1,4 +1,4 @@
-from tkinter import ttk
+from tkinter import ttk, scrolledtext
 
 # Cores Dracula
 DRACULA_BG = "#282A36"
@@ -23,3 +23,20 @@ def aplicar_estilo(root):
     style.map('TButton',
               background=[('active', DRACULA_BUTTON_ACTIVE)],
               foreground=[('disabled', 'gray')])
+    
+def criar_logs_widget(parent, width=90, height=15, padx=5, pady=5, font=("Consolas", 10)):
+    logs_widget = scrolledtext.ScrolledText(
+        parent,
+        width=width,
+        height=height,
+        font=font,
+        fg=DRACULA_FG,
+        bg=DRACULA_LOGS_WIDGET,
+        relief="flat",
+        borderwidth=5,
+        padx=padx,
+        pady=pady,
+    )
+    logs_widget.pack(fill="both", expand=True)
+    logs_widget.config(state="disabled")
+    return logs_widget

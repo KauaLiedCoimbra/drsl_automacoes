@@ -21,7 +21,7 @@ def caminho_recurso(relativo):
 with open(caminho_recurso("re_nome_email.json"), "r", encoding="utf-8") as f:
     re_nomes = json.load(f)  # Será um dicionário {RE: {"Nome": ..., "E-mail": ...}}
 # ------------------------------------------
-# Extração dados da planilha original
+# Extração dados da planilha origina
 # ------------------------------------------
 def extrair_dados_planilha(caminho_planilha, print_log, caminho_saida="dados_coletados.xlsx"):
     # Ler a planilha

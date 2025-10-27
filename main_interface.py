@@ -3,6 +3,7 @@ from tkinter import ttk
 from logs_bloqueio.logs_bloqueio_frame import criar_frame_logs_bloqueio
 from mapear_sap.mapear_sap_frame import criar_frame_sap_map
 from cata_erro.cata_erro_frame import criar_frame_cata_erro
+from converte_parquet.conversor_parquet import criar_frame_conversor_parquet
 import style
 import ctypes
 import os
@@ -13,16 +14,17 @@ import sys
 # ---------------------------
 nucleos = {
     "Administrativo": [],
-    "Qualidade": ["Mapeamento SAP"],
+    "Qualidade": ["Mapeamento SAP", "Conversor Parquet"],
     "Pré-Faturamento": [],
-    "Pós-Faturamento": ["Logs de bloqueio", "Cata-erro"],  # Botão adaptável
+    "Pós-Faturamento": ["Logs de bloqueio", "Cata-erro"],
     "Reclamação": [],
     "Jurídico": []
 }
 sistemas_frames = {
     "Logs de bloqueio": criar_frame_logs_bloqueio,
     "Mapeamento SAP": criar_frame_sap_map,
-    "Cata-erro": criar_frame_cata_erro
+    "Cata-erro": criar_frame_cata_erro,
+    "Conversor Parquet": criar_frame_conversor_parquet,
 }
 frames_criados = {}
 # ---------------------------

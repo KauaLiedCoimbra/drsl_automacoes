@@ -42,20 +42,7 @@ def criar_frame_logs_bloqueio(parent, btn_voltar=None):
     progress_label.pack(anchor="center", pady=(0,5))  # Coloca acima da barra, alinhada ao centro
 
     # ScrolledText para logs
-    logs_widget = scrolledtext.ScrolledText(
-    frame,
-    width=90,
-    height=15,
-    font=("Consolas", 10),  # fundo do Dracula
-    fg=style.DRACULA_FG,
-    bg=style.DRACULA_LOGS_WIDGET,  # cor do cursor (mesmo que não apareça)
-    relief="flat",             # sem bordas 3D
-    borderwidth=5,
-    padx=5,
-    pady=5,
-)
-    logs_widget.pack(fill="both", expand=True)
-    logs_widget.config(state="disabled")
+    logs_widget = style.criar_logs_widget(frame)
 
     # Frame para botões
     btn_frame = ttk.Frame(frame)

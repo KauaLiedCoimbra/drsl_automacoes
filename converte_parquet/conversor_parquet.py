@@ -129,20 +129,25 @@ def criar_frame_conversor_parquet(parent, btn_voltar=None):
 
                 df_total = pd.concat(dfs, ignore_index=True)
 
-                # tenta salvar e corrige colunas problemáticas dinamicamente
+                # Corrige colunas sem nome
+                for col in df_total.select_dtypes(include=["object"]).columns:
+                    df_total[col] = df_total[col].astype(str)
+
+                # Loop para salvar e corrigir colunas problemáticas
                 while True:
                     try:
                         df_total.to_parquet(caminho_saida, engine="pyarrow", index=False)
-                        break  # salvamento concluído
+                        break
                     except Exception as e:
                         msg = str(e)
                         if "Conversion failed for column" in msg:
                             import re
-                            col = re.search(r"column (\w+)", msg)
+                            col = re.search(r"column '(.*?)'", msg)
                             if col:
                                 col_name = col.group(1)
-                                log(f"Forçando coluna {col_name} como texto (str) devido a erro de conversão...")
-                                df_total[col_name] = df_total[col_name].astype(str)
+                                log(f"Forçando coluna '{col_name}' como texto (str) devido a erro de conversão...")
+                                # converte toda a coluna para string robustamente
+                                df_total[col_name] = df_total[col_name].apply(lambda x: str(x) if x is not None else "")
                             else:
                                 raise e
                         else:

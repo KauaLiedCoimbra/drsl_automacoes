@@ -1,2 +1,103 @@
 adicionar seleção de aba no logs_bloqueio
 adicionar filtros e condicionais na planilha final no logs_bloqueio
+
+elif ext in [".xls", ".xlsx"]:
+                import openpyxl
+
+                log("Lendo planilhas via openpyxl...")
+
+                wb = openpyxl.load_workbook(arquivo, read_only=True, data_only=True)
+                sheetnames = wb.sheetnames
+                total_linhas = sum(ws.max_row for ws in wb.worksheets)
+                linhas_lidas = 0
+                dfs = []
+
+                for nome in sheetnames:
+                    if interromper:
+                        log("Conversão interrompida pelo usuário.")
+                        label_progresso.after(0, lambda: label_progresso.config(text="Conversão interrompida."))
+                        wb.close()
+                        return
+
+                    ws = wb[nome]
+                    rows_iter = ws.iter_rows(values_only=True)
+
+                    # Lê cabeçalho
+                    header = next(rows_iter)
+                    data = []
+
+                    for i, row in enumerate(rows_iter, start=1):
+                        if interromper:
+                            log("Conversão interrompida pelo usuário.")
+                            label_progresso.after(0, lambda: label_progresso.config(text="Conversão interrompida."))
+                            wb.close()
+                            return
+
+                        data.append(row)
+                        linhas_lidas += 1
+
+                        # Atualiza a cada 1000 linhas
+                        if i % 1000 == 0:
+                            perc = (linhas_lidas / total_linhas) * 100
+                            tempo_passado = time.time() - t0
+                            vel = linhas_lidas / max(tempo_passado, 0.001)
+                            restante = (total_linhas - linhas_lidas) / vel if vel > 0 else 0
+                            label_text = f"Lidas {linhas_lidas:,}/{total_linhas:,} ({perc:.1f}%) — ETA {restante/60:.1f} min"
+                            label_progresso.after(0, lambda txt=label_text: label_progresso.config(text=txt))
+
+                    df = pd.DataFrame(data, columns=header)
+                    dfs.append(df)
+                    log(f"Aba '{nome}' concluída ({len(df):,} linhas).")
+
+                wb.close()
+                df_total = pd.concat(dfs, ignore_index=True)
+
+
+
+
+
+                elif ext in [".xls", ".xlsx"]:
+                # lê todas as abas de uma vez
+                sheets = pd.read_excel(arquivo, sheet_name=None)
+
+                # total de linhas para progresso
+                total_estimado = sum(len(df) for df in sheets.values())
+                dfs = []
+                linhas_lidas = 0
+
+                # processa cada aba
+                for nome, df in sheets.items():
+                    if interromper:
+                        log("Conversão interrompida pelo usuário.")
+                        label_progresso.after(0, lambda: label_progresso.config(text="Conversão interrompida."))
+                        return
+
+                    linhas_lidas += len(df)
+                    atualizar_progresso(linhas_lidas, total_estimado)
+                    dfs.append(df)
+
+                df_total = pd.concat(dfs, ignore_index=True)
+
+                # Corrige colunas sem nome
+                for col in df_total.select_dtypes(include=["object"]).columns:
+                    df_total[col] = df_total[col].astype(str)
+
+                # Loop para salvar e corrigir colunas problemáticas
+                while True:
+                    try:
+                        df_total.to_parquet(caminho_saida, engine="pyarrow", index=False, compression="snappy")
+                        break
+                    except Exception as e:
+                        msg = str(e)
+                        if "Conversion failed for column" in msg:
+                            import re
+                            col = re.search(r"column '(.*?)'", msg)
+                            if col:
+                                col_name = col.group(1)
+                                log(f"Forçando coluna '{col_name}' como texto (str) devido a erro de conversão...")
+                                # converte toda a coluna para string robustamente
+                                df_total[col_name] = df_total[col_name].apply(lambda x: str(x) if x is not None else "")
+                            else:
+                                raise e
+                        else:
+                            raise e

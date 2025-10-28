@@ -108,49 +108,124 @@ def criar_frame_conversor_parquet(parent, btn_voltar=None):
                 atualizar_progresso(len(df_total), len(df_total))
 
             elif ext in [".xls", ".xlsx"]:
-                # lê todas as abas de uma vez
-                sheets = pd.read_excel(arquivo, sheet_name=None)
+                import openpyxl
+                import re
 
-                # total de linhas para progresso
-                total_estimado = sum(len(df) for df in sheets.values())
-                dfs = []
+                log("Lendo planilhas via openpyxl...")
+
+                wb = openpyxl.load_workbook(arquivo, read_only=True, data_only=True)
+                sheetnames = wb.sheetnames
+
+                # calculo do total de linhas (aproximação: considera max_row de cada folha)
+                total_linhas = sum(ws.max_row - 1 for ws in wb.worksheets if ws.max_row and ws.max_row > 1)
+                if total_linhas <= 0:
+                    total_linhas = 1  # evita divisão por zero
                 linhas_lidas = 0
+                dfs = []
+                t0 = time.time()
 
-                # processa cada aba
-                for nome, df in sheets.items():
+                for nome in sheetnames:
                     if interromper:
                         log("Conversão interrompida pelo usuário.")
                         label_progresso.after(0, lambda: label_progresso.config(text="Conversão interrompida."))
+                        wb.close()
                         return
 
-                    linhas_lidas += len(df)
-                    atualizar_progresso(linhas_lidas, total_estimado)  # atualização “rápida” de progresso
-                    dfs.append(df)
+                    ws = wb[nome]
+                    rows_iter = ws.iter_rows(values_only=True)
 
-                df_total = pd.concat(dfs, ignore_index=True)
+                    # tenta obter o cabeçalho; se for vazio, cria nomes genéricos
+                    try:
+                        header = list(next(rows_iter))
+                    except StopIteration:
+                        # planilha vazia
+                        continue
 
-                # Corrige colunas sem nome
+                    # normaliza cabeçalho (substitui None por col_#)
+                    header = [f"col_{i}" if (h is None or (isinstance(h, str) and h.strip() == "")) else str(h) for i, h in enumerate(header)]
+
+                    batch = []
+                    batch_size_for_df = 50000  # acumula este tanto antes de transformar em DataFrame (ajustável)
+                    contador_no_sheet = 0
+
+                    for row in rows_iter:
+                        if interromper:
+                            log("Conversão interrompida pelo usuário.")
+                            label_progresso.after(0, lambda: label_progresso.config(text="Conversão interrompida."))
+                            wb.close()
+                            return
+
+                        batch.append(row)
+                        linhas_lidas += 1
+                        contador_no_sheet += 1
+
+                        # Atualiza a cada 1000 linhas lidas ou quando o batch atingir tamanho
+                        if contador_no_sheet % 1000 == 0 or len(batch) >= batch_size_for_df or linhas_lidas == total_linhas:
+                            # converte batch em DataFrame parcial
+                            df_parcial = pd.DataFrame(batch, columns=header)
+                            # força colunas object para str (prevenção precoce)
+                            for col in df_parcial.select_dtypes(include=["object"]).columns:
+                                df_parcial[col] = df_parcial[col].astype(str)
+
+                            dfs.append(df_parcial)
+                            batch = []
+
+                            perc = (linhas_lidas / total_linhas) * 100
+                            tempo_passado = time.time() - t0
+                            vel = linhas_lidas / max(tempo_passado, 0.001)
+                            restante = (total_linhas - linhas_lidas) / vel if vel > 0 else 0
+                            label_text = f"Lidas {linhas_lidas:,}/{total_linhas:,} ({perc:.1f}%) — ETA {restante/60:.1f} min"
+                            label_progresso.after(0, lambda txt=label_text: label_progresso.config(text=txt))
+
+                    # se sobrou algo no batch após fim da folha
+                    if batch:
+                        df_parcial = pd.DataFrame(batch, columns=header)
+                        for col in df_parcial.select_dtypes(include=["object"]).columns:
+                            df_parcial[col] = df_parcial[col].astype(str)
+                        dfs.append(df_parcial)
+                        batch = []
+
+                    log(f"Aba '{nome}' processada; linhas lidas até agora: {linhas_lidas:,}.")
+
+                wb.close()
+
+                # concatena tudo sem tentar manter tudo em memória por períodos longos
+                if not dfs:
+                    df_total = pd.DataFrame()  # evita erro caso não haja dados
+                else:
+                    df_total = pd.concat(dfs, ignore_index=True)
+
+                # correções gerais: transforma colunas object em str (para evitar erros de inferência)
                 for col in df_total.select_dtypes(include=["object"]).columns:
                     df_total[col] = df_total[col].astype(str)
 
-                # Loop para salvar e corrigir colunas problemáticas
+                # tenta salvar em loop e, se houver erro de conversão de coluna específica, força ela para str e tenta de novo
                 while True:
                     try:
-                        df_total.to_parquet(caminho_saida, engine="pyarrow", index=False)
+                        df_total.to_parquet(caminho_saida, engine="pyarrow", index=False, compression="snappy")
                         break
                     except Exception as e:
                         msg = str(e)
-                        if "Conversion failed for column" in msg:
-                            import re
-                            col = re.search(r"column '(.*?)'", msg)
-                            if col:
-                                col_name = col.group(1)
-                                log(f"Forçando coluna '{col_name}' como texto (str) devido a erro de conversão...")
-                                # converte toda a coluna para string robustamente
-                                df_total[col_name] = df_total[col_name].apply(lambda x: str(x) if x is not None else "")
+                        # tenta extrair nome da coluna do erro (ex.: "Conversion failed for column 'num_medidor' with type object")
+                        col_match = re.search(r"column '([^']+)'", msg)
+                        if col_match:
+                            col_name = col_match.group(1)
+                            log(f"Forçando coluna '{col_name}' como texto (str) devido a erro de conversão...")
+                            # forçar a coluna para string de forma robusta
+                            if col_name in df_total.columns:
+                                df_total[col_name] = df_total[col_name].apply(lambda x: "" if x is None else str(x))
                             else:
-                                raise e
+                                # se não existe exatamente assim (às vezes index/escape), tenta encontrar coluna parecida
+                                possibles = [c for c in df_total.columns if col_name.lower() in c.lower()]
+                                if possibles:
+                                    c0 = possibles[0]
+                                    log(f"Coluna exata não encontrada, aplicando correção em '{c0}'")
+                                    df_total[c0] = df_total[c0].apply(lambda x: "" if x is None else str(x))
+                                else:
+                                    # se não houver correspondência, re-lança o erro
+                                    raise e
                         else:
+                            # se não foi possível identificar a coluna, relança o erro
                             raise e
 
             elif ext == ".xml":
@@ -177,7 +252,7 @@ def criar_frame_conversor_parquet(parent, btn_voltar=None):
             # ------------------- SALVAMENTO -------------------
             log("Salvando arquivo Parquet...")
             label_progresso.after(0, lambda: label_progresso.config(text="Salvando Parquet..."))
-            df_total.to_parquet(caminho_saida, engine="pyarrow", index=False)
+            df_total.to_parquet(caminho_saida, engine="pyarrow", index=False, compression="snappy")
 
             tempo_total = time.time() - t0
             log(f"Conversão concluída em {tempo_total:.1f}s: {caminho_saida}")

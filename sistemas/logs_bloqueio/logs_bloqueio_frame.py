@@ -1,7 +1,7 @@
 from tkinter import ttk, filedialog
 import tkinter as tk
 import threading
-from logs_bloqueio import logs_bloqueio
+from sistemas.logs_bloqueio import logs_bloqueio
 import utils as u
 import style
 import pandas as pd
@@ -102,7 +102,7 @@ def criar_frame_logs_bloqueio(parent, btn_voltar=None):
             else:
                 escolha_win = tk.Toplevel(frame)
                 escolha_win.title("Selecionar aba")
-                escolha_win.geometry("300x150")
+                escolha_win.geometry("400x250")
                 escolha_win.configure(bg="#282a36")
 
                 tk.Label(

@@ -2,6 +2,9 @@
 *.xlsx
 *.xlsm
 
+# Ignorar todos os XLS temporários da pasta de relatórios
+sistemas/refat massivo/relatorios_temp/*.XLS
+
 # Ignorar cache do Python
 __pycache__/
 *.pyc

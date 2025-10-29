@@ -1,5 +1,5 @@
 from tkinter import ttk, scrolledtext, filedialog
-import mapear_sap.mapear_sap as mapear_sap  # seu módulo SAP
+from sistemas.mapear_sap import mapear_sap  # seu módulo SAP
 import utils as u
 import style
 

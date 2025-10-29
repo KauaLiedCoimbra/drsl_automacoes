@@ -4,6 +4,7 @@ from sistemas.logs_bloqueio.logs_bloqueio_frame import criar_frame_logs_bloqueio
 from sistemas.mapear_sap.mapear_sap_frame import criar_frame_sap_map
 from sistemas.cata_erro.cata_erro_frame import criar_frame_cata_erro
 from sistemas.converte_parquet.conversor_parquet import criar_frame_conversor_parquet
+from sistemas.refat_massivo.refat_massivo_frame import criar_frame_refat_massivo
 import style
 import ctypes
 import os
@@ -13,7 +14,7 @@ import sys
 # Dados iniciais
 # ---------------------------
 nucleos = {
-    "Administrativo": [],
+    "Administrativo": ["Refat massivo"],
     "Qualidade": ["Mapeamento SAP", "Conversor Parquet"],
     "Pré-Faturamento": [],
     "Pós-Faturamento": ["Logs de bloqueio", "Cata-erro"],
@@ -25,8 +26,9 @@ sistemas_frames = {
     "Mapeamento SAP": criar_frame_sap_map,
     "Cata-erro": criar_frame_cata_erro,
     "Conversor Parquet": criar_frame_conversor_parquet,
-    "Cata-subsídio": None
-}
+    "Cata-subsídio": None,
+    "Refat massivo": criar_frame_refat_massivo
+    }
 frames_criados = {}
 # ---------------------------
 # Janela principal

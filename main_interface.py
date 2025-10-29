@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
-from logs_bloqueio.logs_bloqueio_frame import criar_frame_logs_bloqueio
-from mapear_sap.mapear_sap_frame import criar_frame_sap_map
-from cata_erro.cata_erro_frame import criar_frame_cata_erro
-from converte_parquet.conversor_parquet import criar_frame_conversor_parquet
+from sistemas.logs_bloqueio.logs_bloqueio_frame import criar_frame_logs_bloqueio
+from sistemas.mapear_sap.mapear_sap_frame import criar_frame_sap_map
+from sistemas.cata_erro.cata_erro_frame import criar_frame_cata_erro
+from sistemas.converte_parquet.conversor_parquet import criar_frame_conversor_parquet
 import style
 import ctypes
 import os

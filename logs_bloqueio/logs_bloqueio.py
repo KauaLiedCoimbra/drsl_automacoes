@@ -27,9 +27,12 @@ with open(caminho_recurso("re_nome_email.json"), "r", encoding="utf-8") as f:
 # Extração dados da planilha origina
 # ------------------------------------------
 def extrair_dados_planilha(caminho_planilha, print_log, caminho_saida="dados_coletados.xlsx"):
-    # Ler a planilha
     try:
-        df = pd.read_excel(caminho_planilha)
+        if isinstance(caminho_planilha, tuple):
+            caminho, aba = caminho_planilha
+            df = pd.read_excel(caminho, sheet_name=aba)
+        else:
+            df = pd.read_excel(caminho_planilha)
     except Exception as e:
         print_log(f"❌ Erro ao abrir a planilha {caminho_planilha}: {e}")
         return None

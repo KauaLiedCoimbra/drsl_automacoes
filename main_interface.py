@@ -18,13 +18,14 @@ nucleos = {
     "Pré-Faturamento": [],
     "Pós-Faturamento": ["Logs de bloqueio", "Cata-erro"],
     "Reclamação": [],
-    "Jurídico": []
+    "Jurídico": ["Cata-subsídio"]
 }
 sistemas_frames = {
     "Logs de bloqueio": criar_frame_logs_bloqueio,
     "Mapeamento SAP": criar_frame_sap_map,
     "Cata-erro": criar_frame_cata_erro,
     "Conversor Parquet": criar_frame_conversor_parquet,
+    "Cata-subsídio": None
 }
 frames_criados = {}
 # ---------------------------

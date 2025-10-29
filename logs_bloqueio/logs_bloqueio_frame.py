@@ -1,4 +1,5 @@
-from tkinter import ttk, scrolledtext, filedialog
+from tkinter import ttk, filedialog
+import tkinter as tk
 import threading
 from logs_bloqueio import logs_bloqueio
 import utils as u
@@ -88,11 +89,50 @@ def criar_frame_logs_bloqueio(parent, btn_voltar=None):
             title="Selecione o arquivo Excel",
             filetypes=[("Excel files", "*.xlsx *.xls")]
         )
-        if caminho:
-            caminho_planilha = caminho
-            u.print_log(logs_widget, f"📄 Arquivo selecionado: {caminho}")
-        else:
+        if not caminho:
             u.print_log(logs_widget, "⚠ Nenhum arquivo selecionado")
+            return
+        
+        try:
+            xls = pd.ExcelFile(caminho)
+            abas = xls.sheet_names
+
+            if len(abas) == 1:
+                aba_selecionada = abas[0]
+            else:
+                escolha_win = tk.Toplevel(frame)
+                escolha_win.title("Selecionar aba")
+                escolha_win.geometry("300x150")
+                escolha_win.configure(bg="#282a36")
+
+                tk.Label(
+                    escolha_win,
+                    text="Selecione a aba da planilha:",
+                    bg="#282a36", fg="#f8f8f2",
+                    font=("Consolas", 10, "bold")
+                ).pack(pady=10)
+
+                aba_var = tk.StringVar(value=abas[0])
+                combo = ttk.Combobox(escolha_win, textvariable=aba_var, values=abas, state="readonly")
+                combo.pack(pady=5)
+
+                def confirmar_aba():
+                    nonlocal caminho_planilha
+                    aba_escolhida = aba_var.get()
+                    caminho_planilha = (caminho, aba_escolhida)
+                    u.print_log(logs_widget, f"📄 Arquivo: {caminho}\n📘 Aba selecionada: {aba_escolhida}")
+                    escolha_win.destroy()
+
+                ttk.Button(escolha_win, text="Confirmar", command=confirmar_aba).pack(pady=10)
+                escolha_win.grab_set()
+                return  # encerra até o usuário escolher a aba
+            
+            caminho_planilha = (caminho, aba_selecionada)
+            u.print_log(logs_widget, f"📄 Arquivo selecionado: {caminho}\n📘 Aba: {aba_selecionada}")
+
+        except Exception as e:
+            u.print_log(logs_widget, f"❌ Erro ao ler abas da planilha: {e}")
+
 
     def executar_logs_bloqueio_thread():
         nonlocal caminho_planilha

@@ -295,15 +295,9 @@ def executar_logs_bloqueio(caminho_filtrado=None, print_log=print, atualizar_pro
         df[col] = df[col].apply(lambda x: str(int(x)) if pd.notna(x) and isinstance(x, float) else str(x).strip())
 
     # Conexão SAP
-    try:
-        SapGuiAuto = win32com.client.GetObject("SAPGUI")
-        session = SapGuiAuto.GetScriptingEngine.Children(0).Children(0)
-    except Exception as e:
-        print_log(f"❌ Erro ao conectar ao SAP: {e}")
-        return
+    session = u.conectar_sap()
 
     # Maximiza e acessa ES21
-    session.findById("wnd[0]").maximize()
     session.findById("wnd[0]/tbar[0]/okcd").text = "es21"
     session.findById("wnd[0]").sendVKey(0)
 

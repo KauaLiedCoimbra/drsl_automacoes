@@ -1,7 +1,6 @@
 import time
 import os
 import utils as u
-import win32com.client as win32
 
 def coletar_dados(instalacoes, infos_selecionadas, periodo_inicio, periodo_fim, logs_widget=None, interromper_var=None):
     """
@@ -10,16 +9,7 @@ def coletar_dados(instalacoes, infos_selecionadas, periodo_inicio, periodo_fim, 
         - Coleta as informações desejadas
         - Salva em arquivos/pastas estruturadas
     """
-    u.print_log(logs_widget, 'será')
-    SapGuiAuto = win32.GetObject("SAPGUI")
-    u.print_log(logs_widget, 'será')
-    application = SapGuiAuto.GetScriptingEngine
-    u.print_log(logs_widget, 'será')
-    connection = application.Children(0)
-    u.print_log(logs_widget, 'será')
-    session = connection.Children(0)
-    u.print_log(logs_widget, 'será')
-    session.findById("wnd[0]").maximize()
+    session = u.conectar_sap()
 
     u.print_log(logs_widget, f"🔹 Iniciando coleta de dados para {len(instalacoes)} instalações")
 

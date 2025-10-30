@@ -1,4 +1,5 @@
 import win32com.client
+import utils as u
 
 # Variável global para armazenar o conteúdo gerado
 conteudo_gerado = []
@@ -10,23 +11,7 @@ def transcrever_sap_linear(print_log):
     try:
         print_log("▶ Iniciando transcrição da tela SAP...")
 
-        try:
-            SapGuiAuto = win32com.client.GetObject("SAPGUI")
-        except Exception:
-            print_log("❌ Não foi possível acessar o SAP GUI. Verifique se o SAP está aberto e com scripting habilitado (Alt+F12 → Opções → Scripting).")
-            return
-
-        application = SapGuiAuto.GetScriptingEngine
-        if application is None or application.Children.Count == 0:
-            print_log("❌ Nenhuma conexão SAP ativa encontrada. Abra o SAP e entre em uma sessão antes de executar.")
-            return
-
-        connection = application.Children(0)
-        if connection.Children.Count == 0:
-            print_log("❌ Nenhuma sessão aberta no SAP. Entre em um sistema (ex: SE16) e tente novamente.")
-            return
-
-        session = connection.Children(0)
+        session = u.conectar_sap()
         window = session.ActiveWindow
         print_log("✅ Conectado ao SAP GUI com sucesso.")
 

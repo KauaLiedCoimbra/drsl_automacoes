@@ -1,6 +1,9 @@
 import re
 import psutil
 import time
+import win32com.client as win32
+import inspect
+import tkinter as tk
 
 DATA_REGEX = r"^(\d{2})\.(\d{2})\.(\d{4})$"
 
@@ -29,22 +32,33 @@ def extrair_dia(data):
         return match.group(1)  # captura o dia
     return None
 
-def print_log(widget, msg):
-    if not widget:
+def print_log(widget=None, msg=None):
+    # Se não for widget válido, só imprime no console
+    if not isinstance(widget, tk.Text):
+        caller = inspect.stack()[1]
+        filename = caller.filename
+        lineno = caller.lineno
+        funcname = caller.function
+        print(f"[print_log] Widget inválido ou ausente! ({filename}:{funcname}:{lineno}) | msg={msg}")
         return
+
+    if msg is None:
+        caller = inspect.stack()[1]
+        filename = caller.filename
+        lineno = caller.lineno
+        funcname = caller.function
+        msg = f"[AVISO] print_log chamado sem mensagem! ({filename}:{funcname}:{lineno})"
 
     def _update():
         widget.config(state="normal")
         _, bottom = widget.yview()
-        no_final = bottom >= 0.9  # perto do final
-
+        no_final = bottom >= 0.9
         widget.insert("end", msg + "\n")
-        if no_final:
+        if bottom >= 0.9:
             widget.see("end")
-
         widget.config(state="disabled")
 
-    widget.after(0, _update)  # garante execução na thread principal
+    widget.after(0, _update)
 
 def normalizar_colunas(planilha):
     novas_colunas = []
@@ -60,3 +74,24 @@ def fechar_sap_forcadamente():
         if proc.info['name'] and 'saplogon' in proc.info['name'].lower():
             proc.kill()
     time.sleep(2)  # espera o processo fechar
+
+def conectar_sap():
+    try:
+        SapGuiAuto = win32.GetObject("SAPGUI")
+    except Exception:
+        print_log("❌ Não foi possível acessar o SAP GUI. Verifique se o SAP está aberto e com scripting habilitado (Alt+F12 → Opções → Scripting).")
+        return
+    
+    application = SapGuiAuto.GetScriptingEngine
+    if application is None or application.Children.Count == 0:
+        print_log("❌ Nenhuma conexão SAP ativa encontrada. Abra o SAP e entre em uma sessão antes de executar.")
+        return
+
+    connection = application.Children(0)
+    if connection.Children.Count == 0:
+        print_log("❌ Nenhuma sessão aberta no SAP. Entre em um sistema (ex: SE16) e tente novamente.")
+        return
+    
+    session = connection.Children(0)
+    session.findById("wnd[0]").maximize()
+    return session

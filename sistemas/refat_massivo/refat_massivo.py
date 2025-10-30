@@ -3,21 +3,11 @@ import time
 import pandas as pd
 import pyperclip
 import win32com.client as win32
-from win32com.client import constants
-import string
 import utils as u
+import string
+from win32com.client import constants
 
 PASTA_DOWNLOAD_PADRAO = r"C:\Users\2038860\OneDrive - CPFL Energia S A\projetos\automatron\sistemas\refat_massivo\relatorios"
-
-# ---------------------------
-# Conectar SAP
-# ---------------------------
-def conectar_sap():
-    SapGuiAuto = win32.GetObject("SAPGUI")
-    application = SapGuiAuto.GetScriptingEngine
-    connection = application.Children(0)
-    session = connection.Children(0)
-    return session
 
 # ---------------------------
 # Abrir transação
@@ -34,10 +24,6 @@ def abrir_transacao(session, periodo, p_file):
 # Ler coluna de interesse
 # ---------------------------
 def ler_coluna_excel(logs_widget, caminho_planilha, coluna_nome):
-    import win32com.client as win32
-    import string
-    from win32com.client import constants
-
     # Abrir Excel invisível
     excel_app = win32.gencache.EnsureDispatch('Excel.Application')
     excel_app.Visible = False
@@ -154,7 +140,7 @@ def executar_refat_massivo(logs_widget, caminho_planilha, periodo, tamanho_lote,
                            p_file, coluna, interromper_flag=None, pasta_download=PASTA_DOWNLOAD_PADRAO):
     try:
         u.print_log(logs_widget, "🔗 Conectando ao SAP...")
-        session = conectar_sap()
+        session = u.conectar_sap()
 
         u.print_log(logs_widget, f"🧭 Acessando transação com período {periodo} e arquivo {p_file}...")
         abrir_transacao(session, periodo, p_file)

@@ -5,6 +5,7 @@ from sistemas.mapear_sap.mapear_sap_frame import criar_frame_sap_map
 from sistemas.cata_erro.cata_erro_frame import criar_frame_cata_erro
 from sistemas.converte_parquet.conversor_parquet import criar_frame_conversor_parquet
 from sistemas.refat_massivo.refat_massivo_frame import criar_frame_refat_massivo
+from sistemas.cata_subsidio.cata_subsidio_frame import criar_frame_cata_subsidio
 import style
 import ctypes
 import os
@@ -14,20 +15,20 @@ import sys
 # Dados iniciais
 # ---------------------------
 nucleos = {
-    "Administrativo": ["Refat massivo"],
+    "Administrativo": ["ZFAT0657 - Fat, Instalação, Mês referência"],
     "Qualidade": ["Mapeamento SAP", "Conversor Parquet"],
     "Pré-Faturamento": [],
-    "Pós-Faturamento": ["Logs de bloqueio", "Cata-erro"],
+    "Pós-Faturamento": ["ES21 - Logs de bloqueio", "Cata-erro"],
     "Reclamação": [],
     "Jurídico": ["Cata-subsídio"]
 }
 sistemas_frames = {
-    "Logs de bloqueio": criar_frame_logs_bloqueio,
+    "ES21 - Logs de bloqueio": criar_frame_logs_bloqueio,
     "Mapeamento SAP": criar_frame_sap_map,
     "Cata-erro": criar_frame_cata_erro,
     "Conversor Parquet": criar_frame_conversor_parquet,
-    "Cata-subsídio": None,
-    "Refat massivo": criar_frame_refat_massivo
+    "Cata-subsídio": criar_frame_cata_subsidio,
+    "ZFAT0657 - Fat, Instalação, Mês referência": criar_frame_refat_massivo
     }
 frames_criados = {}
 # ---------------------------
@@ -49,15 +50,15 @@ window_width = int(screen_width * 0.7)
 window_height = int(screen_height * 0.75)
 
 # Define limites para não ficar pequeno demais ou gigante
-window_width = max(1000, min(window_width, 1600))
-window_height = max(700, min(window_height, 1000))
+window_width = max(1150, min(window_width, 1600))
+window_height = max(800, min(window_height, 1000))
 
 # Centraliza a janela
 x_pos = int((screen_width - window_width) / 2)
 y_pos = int((screen_height - window_height) / 4)
 
 root.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
-root.resizable(False, False)
+#root.resizable(False, False)
 # ---------------------------
 # Ícone
 # ---------------------------
@@ -143,7 +144,7 @@ def abrir_frame_sistema(sistema):
     for widget in system_frame.winfo_children():
         widget.destroy()
 
-    ttk.Label(system_frame, text=f"Sistema: {sistema}", font=("Consolas", 22, "bold"),
+    ttk.Label(system_frame, text=f"{sistema}", font=("Consolas", 22, "bold"),
               foreground=style.DRACULA_TITLE, background=style.DRACULA_BG).pack(pady=30)
 
     if sistema in sistemas_frames:

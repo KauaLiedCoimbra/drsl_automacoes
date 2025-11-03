@@ -1,4 +1,3 @@
-import win32com.client
 import pandas as pd
 import utils as u
 import re
@@ -190,8 +189,6 @@ def tratar_planilha(caminho_planilha, print_log=print):
         )
         ws.cell(row=row, column=col_bloco).font = Font(name="Calibri", size=11)
         ws.cell(row=row, column=col_bloco).alignment = Alignment(horizontal="center", vertical="center")
-
-    print_log("✅ Colunas 'Encontrado?' e 'Bloco' adicionadas e centralizadas.")
 
     # -----------------------------
     # Borda inferior condicional quando instalação muda

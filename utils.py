@@ -79,19 +79,23 @@ def conectar_sap():
     try:
         SapGuiAuto = win32.GetObject("SAPGUI")
     except Exception:
-        print_log("❌ Não foi possível acessar o SAP GUI. Verifique se o SAP está aberto e com scripting habilitado (Alt+F12 → Opções → Scripting).")
+        print("❌ Não foi possível acessar o SAP GUI. Verifique se o SAP está aberto e com scripting habilitado (Alt+F12 → Opções → Scripting).")
         return
     
     application = SapGuiAuto.GetScriptingEngine
     if application is None or application.Children.Count == 0:
-        print_log("❌ Nenhuma conexão SAP ativa encontrada. Abra o SAP e entre em uma sessão antes de executar.")
+        print("❌ Nenhuma conexão SAP ativa encontrada. Abra o SAP e entre em uma sessão antes de executar.")
         return
 
     connection = application.Children(0)
     if connection.Children.Count == 0:
-        print_log("❌ Nenhuma sessão aberta no SAP. Entre em um sistema (ex: SE16) e tente novamente.")
+        print("❌ Nenhuma sessão aberta no SAP. Entre em um sistema (ex: SE16) e tente novamente.")
         return
     
     session = connection.Children(0)
     session.findById("wnd[0]").maximize()
     return session
+
+def abrir_transacao(session, transacao):
+    session.findById("wnd[0]/tbar[0]/okcd").text = "/n"+transacao
+    session.findById("wnd[0]").sendVKey(0)

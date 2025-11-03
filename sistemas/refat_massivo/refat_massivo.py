@@ -12,10 +12,7 @@ PASTA_DOWNLOAD_PADRAO = r"C:\Users\2038860\OneDrive - CPFL Energia S A\projetos\
 # ---------------------------
 # Abrir transação
 # ---------------------------
-def abrir_transacao(session, periodo, p_file):
-    session.findById("wnd[0]").maximize()
-    session.findById("wnd[0]/tbar[0]/okcd").text = "ZFAT0657"
-    session.findById("wnd[0]").sendVKey(0)
+def configura_refat(session, periodo, p_file):
     session.findById("wnd[0]/usr/radP_ACES2").select()
     session.findById("wnd[0]/usr/txtS_BPER-LOW").text = periodo
     session.findById("wnd[0]/usr/ctxtP_FILE").text = p_file
@@ -143,7 +140,8 @@ def executar_refat_massivo(logs_widget, caminho_planilha, periodo, tamanho_lote,
         session = u.conectar_sap()
 
         u.print_log(logs_widget, f"🧭 Acessando transação com período {periodo} e arquivo {p_file}...")
-        abrir_transacao(session, periodo, p_file)
+        u.abrir_transacao(session, "ZFAT0657")
+        configura_refat(session, periodo, p_file)
 
         u.print_log(logs_widget, "📖 Lendo planilha...")
 

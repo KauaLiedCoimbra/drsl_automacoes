@@ -1,1 +1,181 @@
-ouié
+import tkinter as tk
+from tkinter import ttk
+from sistemas.logs_bloqueio.logs_bloqueio_frame import criar_frame_logs_bloqueio
+from sistemas.mapear_sap.mapear_sap_frame import criar_frame_sap_map
+from sistemas.cata_erro.cata_erro_frame import criar_frame_cata_erro
+from sistemas.converte_parquet.conversor_parquet import criar_frame_conversor_parquet
+from sistemas.refat_massivo.refat_massivo_frame import criar_frame_refat_massivo
+from sistemas.cata_subsidio.cata_subsidio_frame import criar_frame_cata_subsidio
+import style
+import ctypes
+import os
+import sys
+
+# ---------------------------
+# Dados iniciais
+# ---------------------------
+nucleos = {
+    "Administrativo": ["ZFAT0657 - Fat, Instalação, Mês referência"],
+    "Qualidade": ["Mapeamento SAP", "Conversor Parquet"],
+    "Pré-Faturamento": [],
+    "Pós-Faturamento": ["ES21 - Logs de bloqueio", "Cata-erro"],
+    "Reclamação": [],
+    "Jurídico": ["Cata-subsídio"]
+}
+
+sistemas_frames = {
+    "ES21 - Logs de bloqueio": criar_frame_logs_bloqueio,
+    "Mapeamento SAP": criar_frame_sap_map,
+    "Cata-erro": criar_frame_cata_erro,
+    "Conversor Parquet": criar_frame_conversor_parquet,
+    "Cata-subsídio": criar_frame_cata_subsidio,
+    "ZFAT0657 - Fat, Instalação, Mês referência": criar_frame_refat_massivo
+}
+
+frames_criados = {}
+
+# ---------------------------
+# Janela principal
+# ---------------------------
+root = tk.Tk()
+root.title("Automações do Kauã")
+ctypes.windll.shcore.SetProcessDpiAwareness(1)
+root.tk.call('tk', 'scaling', 2.0)
+
+# Tamanho dinâmico da janela
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+window_width = int(screen_width * 0.75)
+window_height = int(screen_height * 0.8)
+window_width = max(1200, min(window_width, 1600))
+window_height = max(800, min(window_height, 1000))
+x_pos = int((screen_width - window_width) / 2)
+y_pos = int((screen_height - window_height) / 4)
+root.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
+
+# Ícone
+if getattr(sys, 'frozen', False):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.abspath(".")
+icon_path = os.path.join(base_path, "robotic-hand.ico")
+if os.path.exists(icon_path):
+    root.iconbitmap(icon_path)
+try:
+    appid = u"kaua.automatron"
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
+except Exception:
+    pass
+
+# ---------------------------
+# Estilo geral
+# ---------------------------
+style.aplicar_estilo(root)
+
+# ---------------------------
+# Frames principais
+# ---------------------------
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(1, weight=1)
+
+sidebar = tk.Frame(root, bg=style.DRACULA_BG, width=250)
+sidebar.grid(row=0, column=0, sticky="ns")
+sidebar.grid_propagate(False)
+
+main_frame = tk.Frame(root, bg=style.DRACULA_BG)
+main_frame.grid(row=0, column=1, sticky="nsew")
+main_frame.grid_rowconfigure(0, weight=1)
+main_frame.grid_columnconfigure(0, weight=1)
+
+system_frame = tk.Frame(main_frame, bg=style.DRACULA_BG)
+system_frame.grid(row=0, column=0, sticky="nsew")
+
+# ---------------------------
+# Funções de navegação
+# ---------------------------
+def abrir_sistemas(nucleo):
+    for widget in sidebar.winfo_children():
+        widget.destroy()
+    
+    ttk.Label(sidebar, text=f"Núcleo: {nucleo}",
+              font=("Consolas", 18, "bold"),
+              background=style.DRACULA_BG,
+              foreground="#ff79c6").pack(pady=(20,10))
+    
+    sistemas = nucleos[nucleo]
+    if sistemas:
+        for sistema in sistemas:
+            btn = tk.Button(sidebar, text=sistema, font=("Consolas", 14),
+                            bg="#6272a4", fg="#f8f8f2",
+                            activebackground="#50fa7b",
+                            activeforeground="#282a36",
+                            relief="flat", bd=0,
+                            command=lambda s=sistema: abrir_frame_sistema(s))
+            btn.pack(fill="x", pady=5, padx=10)
+    else:
+        ttk.Label(sidebar, text="Nenhum sistema disponível", 
+                  font=("Consolas", 12), foreground=style.DRACULA_FG,
+                  background=style.DRACULA_BG).pack(pady=20)
+
+def abrir_frame_sistema(sistema):
+    for widget in system_frame.winfo_children():
+        widget.destroy()
+    
+    ttk.Label(system_frame, text=sistema,
+              font=("Consolas", 24, "bold"),
+              foreground="#50fa7b",
+              background=style.DRACULA_BG).pack(pady=30)
+    
+    if sistema in sistemas_frames:
+        frame, logs_widget, interromper = sistemas_frames[sistema](system_frame, btn_voltar=btn_voltar)
+        frames_criados[sistema] = (frame, logs_widget, interromper)
+        frame.pack(fill="both", expand=True)
+    else:
+        ttk.Label(system_frame, text="Conteúdo do sistema aqui (vazio por enquanto)",
+                  font=("Consolas", 16), foreground=style.DRACULA_FG,
+                  background=style.DRACULA_BG).pack(pady=20)
+    
+    btn_voltar.place(x=20, y=20)
+
+def voltar_para_nucleos():
+    btn_voltar.place_forget()
+    system_frame.grid_forget()
+    system_frame.grid(row=0, column=0, sticky="nsew")
+    # Atualiza sidebar com núcleos
+    sidebar_update_nucleos()
+
+def sidebar_update_nucleos():
+    for widget in sidebar.winfo_children():
+        widget.destroy()
+    ttk.Label(sidebar, text="DRSL AUTOMAÇÕES",
+              font=("Consolas", 20, "bold"), foreground="#ff79c6",
+              background=style.DRACULA_BG).pack(pady=(20,10))
+    ttk.Label(sidebar, text="Escolha o núcleo:",
+              font=("Consolas", 14), foreground=style.DRACULA_FG,
+              background=style.DRACULA_BG).pack(pady=(0,10))
+    
+    for nucleo in nucleos.keys():
+        btn = tk.Button(sidebar, text=nucleo, font=("Consolas", 14),
+                        bg="#6272a4", fg="#f8f8f2",
+                        activebackground="#50fa7b",
+                        activeforeground="#282a36",
+                        relief="flat", bd=0,
+                        command=lambda n=nucleo: abrir_sistemas(n))
+        btn.pack(fill="x", pady=5, padx=10)
+
+# ---------------------------
+# Botão Voltar fixo
+# ---------------------------
+btn_voltar = tk.Button(root, text="🔙 Voltar", font=("Consolas", 12),
+                       bg="#ff5555", fg="#f8f8f2",
+                       activebackground="#ff79c6",
+                       activeforeground="#282a36",
+                       relief="flat", bd=0,
+                       command=voltar_para_nucleos)
+btn_voltar.place_forget()
+
+# ---------------------------
+# Inicializa interface
+# ---------------------------
+sidebar_update_nucleos()
+root.mainloop()

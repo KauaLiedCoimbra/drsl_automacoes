@@ -2,6 +2,7 @@ import time
 import os
 import utils as u
 import pythoncom
+import pyperclip
 
 def coletar_dados(instalacoes, infos_selecionadas, periodo_inicio, periodo_fim, logs_widget=None, interromper_var=None):
     """
@@ -29,32 +30,72 @@ def coletar_dados(instalacoes, infos_selecionadas, periodo_inicio, periodo_fim, 
         os.makedirs(pasta_inst, exist_ok=True)
         print(inst)
         # Aqui você chamaria funções específicas para cada transação SAP
+        #==================================
+        # DADOS BÁSICOS
+        #==================================
+        u.abrir_transacao(session, "ES32")
+
+        u.print_log(logs_widget, f"   ↳ Coletando Informações de contrato (ES32)")
+        session.findById("wnd[0]/usr/ctxtEANLD-ANLAGE").text = inst
+        session.findById("wnd[0]").sendVKey(0)
+
+        # CONTRATO
+        info = {"contrato": session.findById("wnd[0]/usr/txtEANLD-VERTRAG").text}
+        print(info["contrato"])
+
+        # PN
+        info = {"pn": session.findById("wnd[0]/usr/txtEANLD-PARTNER").text}
+        print(info["pn"])
+
+        # ENDEREÇO
+        info = {"endereço": session.findById("wnd[0]/usr/txtEANLD-LINE1").text}
+        print(info["endereço"])
+
+        # LOCAL DE CONSUMO
+        info = {"local_consumo": session.findById("wnd[0]/usr/ctxtEANLD-VSTELLE").text}
+        print(info["local_consumo"])
+
+        # ZONA
+        zona_text = session.findById("wnd[0]/usr/tblSAPLES30TC_TIMESL/ctxtEANLD-ABLEINH[6,0]").text
+        codigo = zona_text[3:5]
+        if codigo == "BU":
+            info = {"zona": f"Urbana ({zona_text})"}
+        elif codigo == "BR":
+            info = {"zona": f"Rural ({zona_text})"}
+        elif codigo == "BC":
+            info = {"zona": f"Simultânea ({zona_text})"}
+        elif codigo == "TR":
+            info = {"zona": f"Transitório ({zona_text})"}
+        else:
+            info = {"zona": zona_text}
+        print(info["zona"])
+
+        # FASE
+        tp_instal = session.findById("wnd[0]/usr/ctxtEANLD-ANLART").text
+        if tp_instal == "0001":
+            info = {"fase": f"Monofásico"}
+        if tp_instal == "0002":
+            info = {"fase": f"Bifásico"}
+        if tp_instal == "0003":
+            info = {"fase": f"Trifásico"}
+        print(info["fase"])
+
+        # DATA DE LIGAÇÃO
+        session.findById("wnd[0]/tbar[1]/btn[34]").press()
+        session.findById("wnd[0]/usr/tabsMYTABSTRIP/tabpPUSH1/ssubSUB1:SAPLEADS2:0110/cntlCONTROL_AREA1/shellcont/shell").pressToolbarContextButton("&MB_EXPORT")
+        session.findById("wnd[0]/usr/tabsMYTABSTRIP/tabpPUSH1/ssubSUB1:SAPLEADS2:0110/cntlCONTROL_AREA1/shellcont/shell").selectContextMenuItem("&PC")
+        session.findById("wnd[1]/usr/sub:SAPLSPO5:0201/radSPOPLI-SELFLAG[4,0]").select()
+        session.findById("wnd[1]/tbar[0]/btn[0]").press()
+        data_ligacao = pyperclip.paste()
+
+        # FATURAMENTO
+        session.findById("wnd[0]/usr/tabsMYTABSTRIP/tabpPUSH2").select()
+        time.sleep(2)
+
         if "Informações de contrato" in infos_selecionadas:
             u.abrir_transacao(session, "ES32")
             time.sleep(2)
-            u.print_log(logs_widget, f"   ↳ Coletando Informações de contrato (ES32)")
-            session.findById("wnd[0]/usr/ctxtEANLD-ANLAGE").text = inst
-            session.findById("wnd[0]").sendVKey(0)
-
-            # CONTRATO
-            info = {"contrato": session.findById("wnd[0]/usr/txtEANLD-VERTRAG").text}
-            print(info["contrato"])
-
-            # PN
-            info = {"pn": session.findById("wnd[0]/usr/txtEANLD-PARTNER").text}
-            print(info["pn"])
-
-            # ZONA
-            if "BU" in session.findById("wnd[0]/usr/tblSAPLES30TC_TIMESL/ctxtEANLD-ABLEINH[6,0]").text:
-                info = {"zona": f"Urbana ({session.findById("wnd[0]/usr/tblSAPLES30TC_TIMESL/ctxtEANLD-ABLEINH[6,0]").text})"}
-            elif "BR" in session.findById("wnd[0]/usr/tblSAPLES30TC_TIMESL/ctxtEANLD-ABLEINH[6,0]").text:
-                info = {"zona": f"Rural ({session.findById("wnd[0]/usr/tblSAPLES30TC_TIMESL/ctxtEANLD-ABLEINH[6,0]").text})"}
-            else:
-                info = {"zona": session.findById("wnd[0]/usr/tblSAPLES30TC_TIMESL/ctxtEANLD-ABLEINH[6,0]").text}
-
-            # FASE
-            
-            print(info["zona"])
+            # TODO: acessar ES32 e salvar resultados
         if "Histórico de consumo" in infos_selecionadas:
             u.abrir_transacao(session, "ZCCSPEC015")
             time.sleep(2)

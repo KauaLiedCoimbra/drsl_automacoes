@@ -98,30 +98,8 @@ def processar_lotes(logs_widget, session, ws, col_letter, valores, tamanho_lote,
 
         # Ler dados do clipboard
         texto = pyperclip.paste()
-        linhas = [linha.split("|") for linha in texto.splitlines() if linha.strip()]
-        df_lote = pd.DataFrame(linhas)
-
-        if not df_lote.empty:
-            # Remover primeira linha numérica (índices SAP)
-            primeira = df_lote.iloc[0].astype(str).str.replace(" ", "")
-            if all(c.isdigit() or c == "" for c in primeira):
-                df_lote = df_lote.iloc[1:].reset_index(drop=True)
-                u.print_log(logs_widget, "🔹 Primeira linha numérica removida.")
-
-            # Remover coluna A
-            df_lote.drop(df_lote.columns[0], axis=1, inplace=True)
-
-            # Linhas a remover
-            if i == 1:
-                linhas_para_remover = [0, 1, 2, 4]
-            else:
-                linhas_para_remover = [0, 1, 2, 3, 4]
-            # Remover última linha também
-            linhas_para_remover.append(df_lote.index[-1])
-
-            df_lote = df_lote.drop(linhas_para_remover, errors="ignore").reset_index(drop=True)
-
-        df_final = pd.concat([df_final, df_lote], ignore_index=True)
+        df_final, df_lote = u.corrige_na_clipboard(texto, i)
+        
         u.print_log(logs_widget, f"✅ Lote {i} concluído ({len(df_lote)} linhas úteis).")
 
         # Voltar SAP

@@ -4,6 +4,8 @@ import time
 import win32com.client as win32
 import inspect
 import tkinter as tk
+import pyperclip
+import pandas as pd
 
 DATA_REGEX = r"^(\d{2})\.(\d{2})\.(\d{4})$"
 
@@ -99,3 +101,30 @@ def conectar_sap():
 def abrir_transacao(session, transacao):
     session.findById("wnd[0]/tbar[0]/okcd").text = "/n"+transacao
     session.findById("wnd[0]").sendVKey(0)
+    
+def corrige_na_clipboard(texto, i):
+    linhas = [linha.split("|") for linha in texto.splitlines() if linha.strip()]
+    df = pd.DataFrame(linhas)
+
+    if not df.empty:
+        # Remover primeira linha numérica (índices SAP)
+        primeira = df.iloc[0].astype(str).str.replace(" ", "")
+        if all(c.isdigit() or c == "" for c in primeira):
+            df = df.iloc[1:].reset_index(drop=True)
+
+        # Remover coluna A
+        df.drop(df.columns[0], axis=1, inplace=True)
+
+        # Linhas a remover
+        if i == 1:
+            linhas_para_remover = [0, 1, 2, 4]
+        else:
+            linhas_para_remover = [0, 1, 2, 3, 4]
+        # Remover última linha também
+        linhas_para_remover.append(df.index[-1])
+
+        df = df.drop(linhas_para_remover, errors="ignore").reset_index(drop=True)
+
+    df_final = pd.concat([df_final, df], ignore_index=True)
+
+    return df_final, df

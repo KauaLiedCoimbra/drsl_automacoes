@@ -98,8 +98,9 @@ def processar_lotes(logs_widget, session, ws, col_letter, valores, tamanho_lote,
 
         # Ler dados do clipboard
         texto = pyperclip.paste()
-        df_final, df_lote = u.corrige_na_clipboard(texto, i)
-        
+        df_lote = u.corrige_temporario(texto, i, [0, 1, 2, 4], [0, 1, 2, 3, 4], [0])
+
+        df_final = pd.concat([df_final, df_lote], ignore_index=True)
         u.print_log(logs_widget, f"✅ Lote {i} concluído ({len(df_lote)} linhas úteis).")
 
         # Voltar SAP

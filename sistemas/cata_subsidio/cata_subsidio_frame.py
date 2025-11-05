@@ -4,13 +4,18 @@ from tkcalendar import DateEntry
 import threading
 import utils as u
 import style as s
+from datetime import date
 
 def criar_frame_cata_subsidio(parent, btn_voltar=None):
     frame = ttk.Frame(parent, padding=10, style="Custom.TFrame")
 
-    # Variáveis
-    periodo_inicio_var = tk.StringVar()
-    periodo_fim_var = tk.StringVar()
+    # Datas padrão
+    hoje = date.today()
+    um_ano_atras = hoje.replace(year=hoje.year - 1)
+
+    # Variáveis de controle
+    periodo_inicio_var = tk.StringVar(value=um_ano_atras.strftime("%d/%m/%Y"))
+    periodo_fim_var = tk.StringVar(value=hoje.strftime("%d/%m/%Y"))
     interromper = tk.BooleanVar(value=False)
     instalacoes = []
 
@@ -77,9 +82,17 @@ def criar_frame_cata_subsidio(parent, btn_voltar=None):
     ttk.Label(periodo_frame, text="Início:", style="Custom.TLabel").grid(row=0, column=1, sticky="e")
 
     date_inicio = DateEntry(
-        periodo_frame, textvariable=periodo_inicio_var, width=12,
-        background=s.DRACULA_WIDGET_BG, foreground=s.DRACULA_FG,
-        borderwidth=1, relief="flat", date_pattern="dd/mm/yyyy"
+        periodo_frame,
+        textvariable=periodo_inicio_var,
+        width=12,
+        background=s.DRACULA_WIDGET_BG,
+        foreground=s.DRACULA_FG,
+        borderwidth=1,
+        relief="flat",
+        date_pattern="dd/mm/yyyy",
+        year=um_ano_atras.year,
+        month=um_ano_atras.month,
+        day=um_ano_atras.day
     )
     date_inicio.configure(selectbackground=s.DRACULA_BUTTON_BG)
     date_inicio.grid(row=0, column=2, padx=5)
@@ -87,9 +100,17 @@ def criar_frame_cata_subsidio(parent, btn_voltar=None):
     ttk.Label(periodo_frame, text="Fim:", style="Custom.TLabel").grid(row=0, column=3, sticky="e")
 
     date_fim = DateEntry(
-        periodo_frame, textvariable=periodo_fim_var, width=12,
-        background=s.DRACULA_WIDGET_BG, foreground=s.DRACULA_FG,
-        borderwidth=1, relief="flat", date_pattern="dd/mm/yyyy"
+        periodo_frame,
+        textvariable=periodo_fim_var,
+        width=12,
+        background=s.DRACULA_WIDGET_BG,
+        foreground=s.DRACULA_FG,
+        borderwidth=1,
+        relief="flat",
+        date_pattern="dd/mm/yyyy",
+        year=hoje.year,
+        month=hoje.month,
+        day=hoje.day
     )
     date_fim.configure(selectbackground=s.DRACULA_BUTTON_BG)
     date_fim.grid(row=0, column=4, padx=5)
@@ -184,8 +205,8 @@ def criar_frame_cata_subsidio(parent, btn_voltar=None):
             messagebox.showwarning("Aviso", "Selecione ao menos uma informação.")
             return
 
-        inicio = periodo_inicio_var.get()
-        fim = periodo_fim_var.get()
+        inicio = date_inicio.get_date()
+        fim    = date_fim.get_date()
         interromper.set(False)
 
         from sistemas.cata_subsidio.cata_subsidio import coletar_dados

@@ -102,29 +102,33 @@ def abrir_transacao(session, transacao):
     session.findById("wnd[0]/tbar[0]/okcd").text = "/n"+transacao
     session.findById("wnd[0]").sendVKey(0)
     
-def corrige_na_clipboard(texto, i):
-    linhas = [linha.split("|") for linha in texto.splitlines() if linha.strip()]
+def corrige_na_clipboard(texto, i, linhas_remover_i1, linhas_remover_padrao, colunas_remover):
+    # Quebra o texto em colunas
+    linhas = [linha.strip("|").split("|") for linha in texto.splitlines() if linha.strip()]
     df = pd.DataFrame(linhas)
 
-    if not df.empty:
-        # Remover primeira linha numérica (índices SAP)
-        primeira = df.iloc[0].astype(str).str.replace(" ", "")
-        if all(c.isdigit() or c == "" for c in primeira):
-            df = df.iloc[1:].reset_index(drop=True)
+    if df.empty:
+        return df
+    
+    # Remover primeira linha numérica (índices SAP)
+    primeira = df.iloc[0].astype(str).str.replace(r"[ ,\.]", "", regex=True)  # remove espaços, pontos e vírgulas
+    if all(c.isdigit() for c in primeira):
+        df = df.iloc[1:].reset_index(drop=True)
 
-        # Remover coluna A
-        df.drop(df.columns[0], axis=1, inplace=True)
+    # Remover colunas indesejadas
+    for c in sorted(colunas_remover, reverse=True):
+        if c < len(df.columns):
+            df.drop(df.columns[c], axis=1, inplace=True)
 
-        # Linhas a remover
-        if i == 1:
-            linhas_para_remover = [0, 1, 2, 4]
-        else:
-            linhas_para_remover = [0, 1, 2, 3, 4]
-        # Remover última linha também
-        linhas_para_remover.append(df.index[-1])
+    # Linhas a remover
+    if i == 1:
+        linhas_para_remover = linhas_remover_i1.copy()
+    else:
+        linhas_para_remover = linhas_remover_padrao.copy()
 
-        df = df.drop(linhas_para_remover, errors="ignore").reset_index(drop=True)
+    # Remover última linha também
+    linhas_para_remover.append(df.index[-1])
 
-    df_final = pd.concat([df_final, df], ignore_index=True)
+    df = df.drop(linhas_para_remover, errors="ignore").reset_index(drop=True)
 
-    return df_final, df
+    return df

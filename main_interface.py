@@ -37,7 +37,7 @@ frames_criados = {}
 # Janela principal
 # ---------------------------
 root = tk.Tk()
-root.title("Automações do Kauã")
+root.title("DRSL Automações v1 - Kauã")
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
 scale_factor = root.winfo_fpixels('1i') / 72  # pixels por polegada / DPI base
 root.tk.call('tk', 'scaling', 2.0)
@@ -176,7 +176,7 @@ btn_voltar.place_forget()      # começa escondido
 # ---------------------------
 # Títulos e botões dos núcleos
 # ---------------------------
-ttk.Label(frame_nucleos, text="DRSL AUTOMAÇÕES",
+ttk.Label(frame_nucleos, text="DRSL AUTOMAÇÕES - v1",
           font=("Consolas", 26, "bold"), foreground="#ff79c6", background=style.DRACULA_BG).grid(row=0, column=0, columnspan=3, pady=(10))
 ttk.Label(frame_nucleos, text="Escolha o núcleo:",
           font=("Consolas", 20), foreground=style.DRACULA_FG, background=style.DRACULA_BG).grid(row=1, column=0, columnspan=3, pady=(10))

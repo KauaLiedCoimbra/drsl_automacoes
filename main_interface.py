@@ -6,6 +6,7 @@ from sistemas.cata_erro.cata_erro_frame import criar_frame_cata_erro
 from sistemas.converte_parquet.conversor_parquet import criar_frame_conversor_parquet
 from sistemas.refat_massivo.refat_massivo_frame import criar_frame_refat_massivo
 from sistemas.cata_subsidio.cata_subsidio_frame import criar_frame_cata_subsidio
+from sistemas.notas_diarias.notas_diarias_frame import criar_frame_notas_diarias
 import style
 import ctypes
 import os
@@ -19,7 +20,7 @@ nucleos = {
     "Qualidade": ["Mapeamento SAP", "Conversor Parquet"],
     "Pré-Faturamento": [],
     "Pós-Faturamento": ["ES21 - Logs de bloqueio", "Cata-erro"],
-    "Reclamação": [],
+    "Reclamação": ["IW58 - Notas diárias"],
     "Jurídico": ["Cata-subsídio"]
 }
 sistemas_frames = {
@@ -28,7 +29,8 @@ sistemas_frames = {
     "Cata-erro": criar_frame_cata_erro,
     "Conversor Parquet": criar_frame_conversor_parquet,
     "Cata-subsídio": criar_frame_cata_subsidio,
-    "ZFAT0657 - Fat, Instalação, Mês referência": criar_frame_refat_massivo
+    "ZFAT0657 - Fat, Instalação, Mês referência": criar_frame_refat_massivo,
+    "IW58 - Notas diárias": criar_frame_notas_diarias
     }
 frames_criados = {}
 # ---------------------------

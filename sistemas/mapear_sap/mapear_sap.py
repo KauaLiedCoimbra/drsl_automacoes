@@ -1,4 +1,3 @@
-import win32com.client
 import utils as u
 
 # Variável global para armazenar o conteúdo gerado

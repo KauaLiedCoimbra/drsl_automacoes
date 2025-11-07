@@ -1,5 +1,3 @@
-pyinstaller --onefile --windowed --icon=robotic-hand.ico --name "DRSL Automações v1.0" --add-data "sistemas/logs_bloqueio/re_nome_email.json;sistemas/logs_bloqueio" main_interface.py
-
 import time
 import utils as u
 import pythoncom
@@ -95,9 +93,9 @@ def executar_liberar_documentos(logs_widget, matricula="6328490", layout="//CHAR
             grid.selectedRows = ",".join(str(x) for x in linhas_para_selecionar)
 
         # Liberar documentos
-        #session.findById("wnd[0]").sendVKey(16)
-        #for _ in range(len(linhas_para_selecionar)):
-        #    session.findById("wnd[1]").sendVKey(0)
+        session.findById("wnd[0]").sendVKey(16)
+        for _ in range(len(linhas_para_selecionar)):
+            session.findById("wnd[1]").sendVKey(0)
 
         u.print_log(
             logs_widget,

@@ -15,10 +15,10 @@ nucleos = {
     ],
     "qualidade": [
         {"nome": "Mapeamento SAP", "modulo": "mapear_sap"},
-        {"nome": "Conversor Parquet", "modulo": "converte_parquet"}
+        {"nome": "Conversor Parquet", "modulo": "conversor_parquet"}
     ],
     "pre_faturamento": [
-        {"nome": "Auto Enter SAP", "modulo": "auto_enter"}
+        {"nome": "EA05 - Liberar documentos", "modulo": "liberar_documentos"}
     ],
     "pos_faturamento": [
         {"nome": "ES21 - Logs de bloqueio", "modulo": "logs_bloqueio"},

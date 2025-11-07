@@ -5,6 +5,7 @@ import ctypes
 import os
 import sys
 import importlib
+import utils as u
 
 # ---------------------------
 # Dados iniciais
@@ -115,7 +116,7 @@ if getattr(sys, 'frozen', False):
 else:
     base_path = os.path.abspath(".")
 
-icon_path = os.path.join(base_path, "robotic-hand.ico")
+icon_path = u.resource_path("assets/robotic-hand.ico")
 if os.path.exists(icon_path):
     try:
         root.iconbitmap(icon_path)

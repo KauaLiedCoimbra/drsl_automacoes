@@ -5,6 +5,8 @@ import win32com.client as win32
 import inspect
 import tkinter as tk
 import pandas as pd
+import sys
+import os
 
 DATA_REGEX = r"^(\d{2})\.(\d{2})\.(\d{4})$"
 
@@ -132,3 +134,8 @@ def corrige_na_clipboard(texto, i, linhas_remover_i1, linhas_remover_padrao, col
 
     return df
 
+def resource_path(relative_path):
+    """Retorna o caminho absoluto de um recurso, mesmo no .exe"""
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)

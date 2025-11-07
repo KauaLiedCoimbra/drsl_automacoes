@@ -10,17 +10,8 @@ from openpyxl.formatting.rule import FormulaRule
 
 interrompido = False
 
-# ------------------------------------------
-# Importação JSON com relação RExNOMExE-MAIL
-# ------------------------------------------
-def caminho_recurso(relativo):
-    # Caminho dentro do exe ou em desenvolvimento
-    if getattr(sys, 'frozen', False):
-        return os.path.join(sys._MEIPASS, relativo)
-    return os.path.join(os.path.abspath("."), relativo)
-
 # Carrega o JSON embutido
-with open(caminho_recurso("sistemas/pos_faturamento/logs_bloqueio/re_nome_email.json"), "r", encoding="utf-8") as f:
+with open(u.resource_path("assets/re_nome_email.json"), "r", encoding="utf-8") as f:
     re_nomes = json.load(f)  # Será um dicionário {RE: {"Nome": ..., "E-mail": ...}}
 # ------------------------------------------
 # Extração dados da planilha origina

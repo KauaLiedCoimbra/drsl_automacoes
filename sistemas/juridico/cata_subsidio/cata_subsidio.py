@@ -97,10 +97,21 @@ def coletar_dados(instalacoes, infos_selecionadas, periodo_inicio, periodo_fim, 
         info["fase"] = session.findById("wnd[0]/usr/subTABSTRIP:SAPLATAB:0100/tabsTABSTRIP100/tabpTAB02/ssubSUBSC:SAPLATAB:0200/subAREA1:SAPLES20:0314/txtTE191T-TEXT30").text
       
         # CADASTRO DE E-MAIL
-        session.findById("wnd[0]/usr/subTABSTRIP:SAPLATAB:0100/tabsTABSTRIP100/tabpTAB02").select()
-        df_contatos = pd.DataFrame(columns=["Nome", "Telefone", "Email"])
-      
+        session.findById("wnd[0]/usr/subTABSTRIP:SAPLATAB:0100/tabsTABSTRIP100/tabpTAB04").select()
+        tbl_email = session.findById(
+            "wnd[0]/usr/subTABSTRIP:SAPLATAB:0100/tabsTABSTRIP100/tabpTAB04/"
+            "ssubSUBSC:SAPLATAB:0201/subAREA1:ZCCSFATO0005:0100/tblZCCSFATO0005TC_0100"
+        )
+        print(tbl_email)
+        df_email = pd.DataFrame(columns=["Ativo", "Secundário", "E-mail"])
+
         # CADASTRO DE SMS
+        tbl_sms = session.findById(
+            "wnd[0]/usr/subTABSTRIP:SAPLATAB:0100/tabsTABSTRIP100/tabpTAB04/"
+            "ssubSUBSC:SAPLATAB:0201/subAREA1:ZCCSFATO0005:0100/tblZCCSFATO0005TC_0100_SMS"
+        )
+        print(tbl_sms)
+        df_sms = pd.DataFrame(columns=["Secundário", "Telefone"])
       
         # MICRO/MINIGERAÇÃO
         session.findById("wnd[0]/usr/subTABSTRIP:SAPLATAB:0100/tabsTABSTRIP100/tabpTAB05").select()
@@ -183,7 +194,15 @@ def coletar_dados(instalacoes, infos_selecionadas, periodo_inicio, periodo_fim, 
                 df_leituras_filtradas.to_excel(writer, sheet_name='Leituras', index=False)
 
             # Aba Contatos
-            df_contatos.to_excel(writer, sheet_name='Contatos', index=False)
+            if not df_email.empty or not df_sms.empty:
+                # Cria um DataFrame temporário para unir os dois com 2 linhas em branco
+                linhas_vazias = pd.DataFrame([[""]*df_email.shape[1]], columns=df_email.columns)
+                
+                # Concatena: email + 2 linhas vazias + sms
+                df_contatos_final = pd.concat([df_email, linhas_vazias, linhas_vazias, df_sms], ignore_index=True)
+                
+                # Escreve na aba 'Contatos'
+                df_contatos_final.to_excel(writer, sheet_name='Contatos', index=False)
 
             # Aba GD
             df_gd.to_excel(writer, sheet_name='GD', index=False)

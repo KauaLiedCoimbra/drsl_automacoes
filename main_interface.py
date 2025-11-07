@@ -63,7 +63,7 @@ frames_criados = {}
 # Janela principal
 # ---------------------------
 root = tk.Tk()
-root.title("DRSL Automações v1.0 - Kauã")
+root.title("DRSL Automações v1.1 - Kauã")
 
 # Começa invisível (para o fade-in)
 root.attributes("-alpha", 0.0)
@@ -227,7 +227,7 @@ btn_voltar.place_forget()      # começa escondido
 # ---------------------------
 # Títulos e botões dos núcleos
 # ---------------------------
-ttk.Label(frame_nucleos, text="DRSL 4UT0M4ÇÕ3S - v1.0",
+ttk.Label(frame_nucleos, text="DRSL AUTOMAÇÕES - v1.1",
           font=("Consolas", 26, "bold"), foreground="#ff79c6", background=style.DRACULA_BG).grid(row=0, column=0, columnspan=3, pady=(10))
 ttk.Label(frame_nucleos, text="Escolha o núcleo:",
           font=("Consolas", 20), foreground=style.DRACULA_FG, background=style.DRACULA_BG).grid(row=1, column=0, columnspan=3, pady=(10))

@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 import threading
 import utils as u
 import style as s
-from sistemas.notas_diarias.notas_diarias import executar_notas_diarias
+from sistemas.reclamacao.notas_diarias.notas_diarias import executar_notas_diarias
 
 def criar_frame_notas_diarias(parent, btn_voltar=None, destinatario_default="roberta.cardoso@cpfl.com.br"):
     frame = ttk.Frame(parent, padding=10, style="Custom.TFrame")

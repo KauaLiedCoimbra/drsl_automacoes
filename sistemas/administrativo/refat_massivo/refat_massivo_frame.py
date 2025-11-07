@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, scrolledtext
-from sistemas.refat_massivo.refat_massivo import executar_refat_massivo
+from sistemas.administrativo.refat_massivo.refat_massivo import executar_refat_massivo
 import threading
 import style as s
 

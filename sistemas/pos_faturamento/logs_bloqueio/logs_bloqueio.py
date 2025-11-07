@@ -20,7 +20,7 @@ def caminho_recurso(relativo):
     return os.path.join(os.path.abspath("."), relativo)
 
 # Carrega o JSON embutido
-with open(caminho_recurso("sistemas/logs_bloqueio/re_nome_email.json"), "r", encoding="utf-8") as f:
+with open(caminho_recurso("sistemas/pos_faturamento/logs_bloqueio/re_nome_email.json"), "r", encoding="utf-8") as f:
     re_nomes = json.load(f)  # Será um dicionário {RE: {"Nome": ..., "E-mail": ...}}
 # ------------------------------------------
 # Extração dados da planilha origina

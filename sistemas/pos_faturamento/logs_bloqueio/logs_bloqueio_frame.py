@@ -1,7 +1,7 @@
 from tkinter import ttk, filedialog
 import tkinter as tk
 import threading
-from sistemas.logs_bloqueio import logs_bloqueio
+from sistemas.pos_faturamento.logs_bloqueio import logs_bloqueio
 import utils as u
 import style
 import pandas as pd

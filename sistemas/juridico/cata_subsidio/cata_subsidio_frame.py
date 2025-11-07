@@ -4,6 +4,7 @@ from tkcalendar import DateEntry
 import threading
 import utils as u
 import style as s
+from sistemas.juridico.cata_subsidio.cata_subsidio import coletar_dados
 from datetime import date
 
 def criar_frame_cata_subsidio(parent, btn_voltar=None):
@@ -208,8 +209,6 @@ def criar_frame_cata_subsidio(parent, btn_voltar=None):
         inicio = date_inicio.get_date()
         fim    = date_fim.get_date()
         interromper.set(False)
-
-        from sistemas.cata_subsidio.cata_subsidio import coletar_dados
 
         def tarefa():
             try:

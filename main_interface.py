@@ -5,40 +5,57 @@ import ctypes
 import os
 import sys
 import importlib
-import pkgutil
 
 # ---------------------------
 # Dados iniciais
 # ---------------------------
 nucleos = {
-    "Administrativo": [
+    "administrativo": [
         {"nome": "ZFAT0657 - Fat, Instalação, Mês referência", "modulo": "refat_massivo"}
     ],
-    "Qualidade": [
+    "qualidade": [
         {"nome": "Mapeamento SAP", "modulo": "mapear_sap"},
         {"nome": "Conversor Parquet", "modulo": "converte_parquet"}
     ],
-    "Pré-Faturamento": [
+    "pre_faturamento": [
         {"nome": "Auto Enter SAP", "modulo": "auto_enter"}
     ],
-    "Pós-Faturamento": [
+    "pos_faturamento": [
         {"nome": "ES21 - Logs de bloqueio", "modulo": "logs_bloqueio"},
         {"nome": "Cata-erro", "modulo": "cata_erro"}
     ],
-    "Reclamação": [
+    "reclamacao": [
         {"nome": "IW58 - Notas diárias", "modulo": "notas_diarias"}
     ],
-    "Jurídico": [
+    "juridico": [
         {"nome": "Cata-subsídio", "modulo": "cata_subsidio"}
     ]
 }
 
+# Nomes bonitos para exibição
+nucleos_exibicao = {
+    "administrativo": "Administrativo",
+    "qualidade": "Qualidade",
+    "pre_faturamento": "Pré-faturamento",
+    "pos_faturamento": "Pós-faturamento",
+    "reclamacao": "Reclamação",
+    "juridico": "Jurídico"
+}
+
 sistemas = {}
-for _, nome_modulo, _ in pkgutil.iter_modules(["sistemas"]):
-    modulo = importlib.import_module(f"sistemas.{nome_modulo}")
-    for atributo in dir(modulo):
-        if atributo.startswith("criar_frame_"):
-            sistemas[nome_modulo] = getattr(modulo, atributo)
+
+for nucleo, sistemas_info in nucleos.items():
+    for info in sistemas_info:
+        nome_modulo = info["modulo"]
+        try:
+            # Importa usando a subpasta do núcleo
+            modulo = importlib.import_module(f"sistemas.{nucleo}.{nome_modulo}")
+            
+            for atributo in dir(modulo):
+                if atributo.startswith("criar_frame_"):
+                    sistemas[nome_modulo] = getattr(modulo, atributo)
+        except Exception as e:
+            print(f"Erro ao importar {nome_modulo}: {e}")
 
 frames_criados = {}
 
@@ -215,11 +232,11 @@ ttk.Label(frame_nucleos, text="DRSL 4UT0M4ÇÕ3S - v1.0",
 ttk.Label(frame_nucleos, text="Escolha o núcleo:",
           font=("Consolas", 20), foreground=style.DRACULA_FG, background=style.DRACULA_BG).grid(row=1, column=0, columnspan=3, pady=(10))
 
-for i, nucleo in enumerate(nucleos.keys()):
+for i, chave in enumerate(nucleos.keys()):
     row = 2 + i // 3
     col = i % 3
-    ttk.Button(frame_nucleos, text=nucleo, width=20,
-               command=lambda n=nucleo: abrir_sistemas(n)).grid(row=row, column=col, padx=10, pady=5)
+    ttk.Button(frame_nucleos, text=nucleos_exibicao[chave], width=20,
+               command=lambda n=chave: abrir_sistemas(n)).grid(row=row, column=col, padx=10, pady=5)
 
 for col in range(3):
     frame_nucleos.grid_columnconfigure(col, weight=1)

@@ -1,66 +1,95 @@
 import tkinter as tk
 from tkinter import ttk
-from sistemas.logs_bloqueio.logs_bloqueio_frame import criar_frame_logs_bloqueio
-from sistemas.mapear_sap.mapear_sap_frame import criar_frame_sap_map
-from sistemas.cata_erro.cata_erro_frame import criar_frame_cata_erro
-from sistemas.converte_parquet.conversor_parquet import criar_frame_conversor_parquet
-from sistemas.refat_massivo.refat_massivo_frame import criar_frame_refat_massivo
-from sistemas.cata_subsidio.cata_subsidio_frame import criar_frame_cata_subsidio
-from sistemas.notas_diarias.notas_diarias_frame import criar_frame_notas_diarias
 import style
 import ctypes
 import os
 import sys
+import importlib
+import pkgutil
 
 # ---------------------------
 # Dados iniciais
 # ---------------------------
 nucleos = {
-    "Administrativo": ["ZFAT0657 - Fat, Instalação, Mês referência"],
-    "Qualidade": ["Mapeamento SAP", "Conversor Parquet"],
-    "Pré-Faturamento": [],
-    "Pós-Faturamento": ["ES21 - Logs de bloqueio", "Cata-erro"],
-    "Reclamação": ["IW58 - Notas diárias"],
-    "Jurídico": ["Cata-subsídio"]
+    "Administrativo": [
+        {"nome": "ZFAT0657 - Fat, Instalação, Mês referência", "modulo": "refat_massivo"}
+    ],
+    "Qualidade": [
+        {"nome": "Mapeamento SAP", "modulo": "mapear_sap"},
+        {"nome": "Conversor Parquet", "modulo": "converte_parquet"}
+    ],
+    "Pré-Faturamento": [
+        {"nome": "Auto Enter SAP", "modulo": "auto_enter"}
+    ],
+    "Pós-Faturamento": [
+        {"nome": "ES21 - Logs de bloqueio", "modulo": "logs_bloqueio"},
+        {"nome": "Cata-erro", "modulo": "cata_erro"}
+    ],
+    "Reclamação": [
+        {"nome": "IW58 - Notas diárias", "modulo": "notas_diarias"}
+    ],
+    "Jurídico": [
+        {"nome": "Cata-subsídio", "modulo": "cata_subsidio"}
+    ]
 }
-sistemas_frames = {
-    "ES21 - Logs de bloqueio": criar_frame_logs_bloqueio,
-    "Mapeamento SAP": criar_frame_sap_map,
-    "Cata-erro": criar_frame_cata_erro,
-    "Conversor Parquet": criar_frame_conversor_parquet,
-    "Cata-subsídio": criar_frame_cata_subsidio,
-    "ZFAT0657 - Fat, Instalação, Mês referência": criar_frame_refat_massivo,
-    "IW58 - Notas diárias": criar_frame_notas_diarias
-    }
+
+sistemas = {}
+for _, nome_modulo, _ in pkgutil.iter_modules(["sistemas"]):
+    modulo = importlib.import_module(f"sistemas.{nome_modulo}")
+    for atributo in dir(modulo):
+        if atributo.startswith("criar_frame_"):
+            sistemas[nome_modulo] = getattr(modulo, atributo)
+
 frames_criados = {}
+
 # ---------------------------
 # Janela principal
 # ---------------------------
 root = tk.Tk()
-root.title("DRSL Automações v1 - Kauã")
-ctypes.windll.shcore.SetProcessDpiAwareness(1)
-scale_factor = root.winfo_fpixels('1i') / 72  # pixels por polegada / DPI base
-root.tk.call('tk', 'scaling', 2.0)
+root.title("DRSL Automações v1.0 - Kauã")
+
+# Começa invisível (para o fade-in)
+root.attributes("-alpha", 0.0)
+
+# Tentativa de melhorar DPI no Windows (silenciosa se falhar)
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    # não crítico — continua sem erro
+    pass
+
+# escala de interface (mantive, mas pode ajustar)
+try:
+    scale_factor = root.winfo_fpixels('1i') / 72  # pixels por polegada / DPI base
+    root.tk.call('tk', 'scaling', 1.8)
+except Exception:
+    pass
+
 # ---------------------------
 # Tamanho dinâmico da janela
 # ---------------------------
+root.withdraw()  # esconde a janela enquanto configuramos
+
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
-# Calcula o tamanho da janela proporcional à tela
+# Tamanho proporcional
 window_width = int(screen_width * 0.7)
 window_height = int(screen_height * 0.75)
 
-# Define limites para não ficar pequeno demais ou gigante
 window_width = max(1150, min(window_width, 1600))
 window_height = max(800, min(window_height, 1000))
 
-# Centraliza a janela
-x_pos = int((screen_width - window_width) / 2)
-y_pos = int((screen_height - window_height) / 4)
+# Aplica tamanho (sem posição ainda)
+root.geometry(f"{window_width}x{window_height}")
+root.update_idletasks()  # deixa a janela "existir"
 
-root.geometry(f"{window_width}x{window_height}+{x_pos}+{y_pos}")
-#root.resizable(False, False)
+# ✅ Agora centraliza corretamente
+root.eval('tk::PlaceWindow . center')
+
+root.deiconify()  # mostra a janela novamente
+root.resizable(False, False)
+
 # ---------------------------
 # Ícone
 # ---------------------------
@@ -70,18 +99,21 @@ else:
     base_path = os.path.abspath(".")
 
 icon_path = os.path.join(base_path, "robotic-hand.ico")
-
-# Ícone da janela principal
 if os.path.exists(icon_path):
-    root.iconbitmap(icon_path)
+    try:
+        root.iconbitmap(icon_path)
+    except Exception:
+        # alguns ambientes reclamam; não é crítico
+        pass
 
-# Ícone da barra de tarefas (Windows)
+# Ícone da barra de tarefas (Windows) - appID
 try:
     from ctypes import windll
-    appid = u"kaua.automatron"  # identificador único (pode mudar o nome)
+    appid = "kaua.automatron"  # identificador único
     windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 except Exception:
     pass
+
 # ---------------------------
 # Frames
 # ---------------------------
@@ -112,8 +144,8 @@ def abrir_sistemas(nucleo):
     ttk.Label(systems_container, text=f"Sistemas do núcleo: {nucleo}",
               font=("Arial", 14, "bold")).pack(pady=10)
 
-    sistemas = nucleos[nucleo]
-    if sistemas:
+    sistemas_do_nucleo = nucleos[nucleo]
+    if sistemas_do_nucleo:
         # Canvas rolável apenas se houver sistemas
         canvas = tk.Canvas(systems_container, height=200, bg=style.DRACULA_BG, highlightthickness=0)
         scrollbar = ttk.Scrollbar(systems_container, orient="vertical", command=canvas.yview)
@@ -131,32 +163,34 @@ def abrir_sistemas(nucleo):
         scrollbar.pack(side="right", fill="y")
 
         # Adiciona os botões dentro do scrollable_frame
-        for sistema in sistemas:
-            ttk.Button(scrollable_frame, text=sistema,
-                       command=lambda s=sistema: abrir_frame_sistema(s)).pack(pady=5, fill="x", anchor="center")
+        for sistema_info in sistemas_do_nucleo:
+            nome_exibido = sistema_info["nome"]
+            modulo = sistema_info["modulo"]
+            ttk.Button(scrollable_frame, text=nome_exibido,
+                       command=lambda m=modulo, n=nome_exibido: abrir_frame_sistema(m, n)).pack(pady=5, fill="x", anchor="center")
     else:
         # Se não houver sistemas, só mostra mensagem centralizada
         ttk.Label(systems_container, text="Nenhum sistema disponível").pack(pady=10)
 
-def abrir_frame_sistema(sistema):
-    """Abre um novo frame dentro da janela para o sistema selecionado."""
+def abrir_frame_sistema(modulo, nome_exibido):
     frame_nucleos.pack_forget()
     systems_container.pack_forget()
 
     for widget in system_frame.winfo_children():
         widget.destroy()
 
-    ttk.Label(system_frame, text=f"{sistema}", font=("Consolas", 22, "bold"),
+    ttk.Label(system_frame, text=nome_exibido, font=("Consolas", 22, "bold"),
               foreground=style.DRACULA_TITLE, background=style.DRACULA_BG).pack(pady=30)
 
-    if sistema in sistemas_frames:
-        frame, logs_widget, interromper = sistemas_frames[sistema](system_frame, btn_voltar=btn_voltar)
-        frames_criados[sistema] = (frame, logs_widget, interromper)
+    if modulo in sistemas:
+        frame, logs_widget, interromper = sistemas[modulo](system_frame, btn_voltar=btn_voltar)
+        frames_criados[nome_exibido] = (frame, logs_widget, interromper)
         btn_voltar.place(x=10, y=10)
         frame.pack(fill="both", expand=True)
     else:
-        ttk.Label(system_frame, text="Conteúdo do sistema aqui (vazio por enquanto)",
-                  font=("Consolas", 16), foreground=style.DRACULA_FG, background=style.DRACULA_BG).pack(pady=20)
+        ttk.Label(system_frame, text="Sistema ainda não configurado.",
+                  font=("Consolas", 16),
+                  foreground=style.DRACULA_FG, background=style.DRACULA_BG).pack(pady=20)
 
     system_frame.pack(fill="both", expand=True)
 
@@ -176,7 +210,7 @@ btn_voltar.place_forget()      # começa escondido
 # ---------------------------
 # Títulos e botões dos núcleos
 # ---------------------------
-ttk.Label(frame_nucleos, text="DRSL AUTOMAÇÕES - v1",
+ttk.Label(frame_nucleos, text="DRSL 4UT0M4ÇÕ3S - v1.0",
           font=("Consolas", 26, "bold"), foreground="#ff79c6", background=style.DRACULA_BG).grid(row=0, column=0, columnspan=3, pady=(10))
 ttk.Label(frame_nucleos, text="Escolha o núcleo:",
           font=("Consolas", 20), foreground=style.DRACULA_FG, background=style.DRACULA_BG).grid(row=1, column=0, columnspan=3, pady=(10))
@@ -191,7 +225,33 @@ for col in range(3):
     frame_nucleos.grid_columnconfigure(col, weight=1)
 
 # ---------------------------
-# Inicializa interface
+# Aplica estilo e efeitos visuais
 # ---------------------------
 style.aplicar_estilo(root)
+
+def fade_in(window, step=0.05, interval_ms=10):
+    alpha = window.attributes("-alpha")
+    if alpha < 1.0:
+        alpha = min(1.0, alpha + step)
+        window.attributes("-alpha", alpha)
+        window.after(interval_ms, fade_in, window, step, interval_ms)
+
+def fade_out_and_quit(window, step=0.05, interval_ms=10):
+    alpha = window.attributes("-alpha")
+    if alpha > 0.0:
+        alpha = max(0.0, alpha - step)
+        window.attributes("-alpha", alpha)
+        window.after(interval_ms, fade_out_and_quit, window, step, interval_ms)
+    else:
+        window.destroy()
+
+# intercepta fechamento para aplicar fade-out
+root.protocol("WM_DELETE_WINDOW", lambda: fade_out_and_quit(root))
+
+# inicia fade-in
+root.after(150, lambda: fade_in(root))
+
+# ---------------------------
+# Inicializa interface
+# ---------------------------
 root.mainloop()

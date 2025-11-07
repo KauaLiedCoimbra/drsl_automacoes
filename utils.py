@@ -4,7 +4,6 @@ import time
 import win32com.client as win32
 import inspect
 import tkinter as tk
-import pyperclip
 import pandas as pd
 
 DATA_REGEX = r"^(\d{2})\.(\d{2})\.(\d{4})$"
@@ -132,3 +131,4 @@ def corrige_na_clipboard(texto, i, linhas_remover_i1, linhas_remover_padrao, col
     df = df.drop(linhas_para_remover, errors="ignore").reset_index(drop=True)
 
     return df
+
